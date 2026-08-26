@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LoanTrack</string>
+
+    <!-- Login -->
+    <string name="login_title">LoanTrack</string>
+    <string name="login_subtitle">Gerencie seus empréstimos pessoais</string>
+    <string name="sign_in_with_google">Entrar com Google</string>
+    <string name="sign_in_error">Erro ao fazer login. Tente novamente.</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Meus Empréstimos</string>
+    <string name="total_na_rua">Total na rua</string>
+    <string name="recebido_este_mes">Recebido este mês</string>
+    <string name="search_hint">Buscar por nome ou contato</string>
+    <string name="add_loan">Novo Empréstimo</string>
+    <string name="no_loans">Nenhum empréstimo encontrado</string>
+    <string name="filter_todos">Todos</string>
+    <string name="filter_pendentes">Pendentes</string>
+    <string name="filter_atrasados">Atrasados</string>
+    <string name="filter_parciais">Parciais</string>
+    <string name="filter_pagos">Pagos</string>
+    <string name="sort_by_due_date">Por vencimento</string>
+    <string name="sort_by_amount">Por valor</string>
+    <string name="sort_by_name">Por nome</string>
+    <string name="dar_baixa">Dar Baixa</string>
+    <string name="confirm_dar_baixa">Confirmar pagamento total de %1$s?</string>
+    <string name="sign_out">Sair</string>
+
+    <!-- Loan Form -->
+    <string name="add_loan_title">Novo Empréstimo</string>
+    <string name="edit_loan_title">Editar Empréstimo</string>
+    <string name="debtor_name">Nome do Devedor</string>
+    <string name="contact">Contato</string>
+    <string name="loan_date">Data do Empréstimo</string>
+    <string name="due_date">Data de Vencimento</string>
+    <string name="amount_lent">Valor Emprestado</string>
+    <string name="amount_to_receive">Valor a Receber</string>
+    <string name="payment_type">Tipo de Pagamento</string>
+    <string name="payment_type_single">Único</string>
+    <string name="payment_type_installment">Parcelado</string>
+    <string name="installments_total">Número de Parcelas</string>
+    <string name="notes">Observações</string>
+    <string name="save">Salvar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="field_required">Campo obrigatório</string>
+    <string name="due_date_before_loan_date">A data de vencimento deve ser igual ou posterior à data do empréstimo</string>
+    <string name="amount_to_receive_zero">O valor a receber deve ser maior que zero</string>
+    <string name="amount_to_receive_less_than_lent">Atenção: o valor a receber é menor que o valor emprestado</string>
+    <string name="edit_paid_loan_confirmation">Este empréstimo já foi pago. Deseja editar mesmo assim?</string>
+
+    <!-- Loan Detail -->
+    <string name="loan_detail_title">Detalhes do Empréstimo</string>
+    <string name="status">Status</string>
+    <string name="amount_paid">Valor Pago</string>
+    <string name="remaining_balance">Saldo Restante</string>
+    <string name="payment_date">Data do Pagamento</string>
+    <string name="dar_baixa_total">Dar Baixa Total</string>
+    <string name="pagamento_parcial">Pagamento Parcial</string>
+    <string name="delete_loan">Excluir Empréstimo</string>
+    <string name="confirm_delete">Tem certeza que deseja excluir este empréstimo?</string>
+    <string name="delete">Excluir</string>
+    <string name="edit">Editar</string>
+    <string name="payment_history">Histórico de Pagamentos</string>
+    <string name="installments_paid">Parcelas Pagas</string>
+    <string name="enter_partial_amount">Digite o valor do pagamento parcial</string>
+    <string name="partial_amount">Valor do Pagamento</string>
+    <string name="confirm_partial_payment">Confirmar Pagamento</string>
+    <string name="reopen_loan">Reabrir Empréstimo</string>
+    <string name="confirm_reopen">Tem certeza que deseja reabrir este empréstimo?</string>
+
+    <!-- Status -->
+    <string name="status_pending">Pendente</string>
+    <string name="status_paid">Pago</string>
+    <string name="status_overdue">Atrasado</string>
+    <string name="status_partial">Parcial</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">Vencimentos</string>
+    <string name="notification_channel_description">Lembretes de vencimento de empréstimos</string>
+    <string name="notification_tomorrow">Lembrete: %1$s deve pagar amanhã - R$ %2$s</string>
+    <string name="notification_today">Vencimento hoje: %1$s - R$ %2$s</string>
+    <string name="notification_title_reminder">Lembrete de Vencimento</string>
+    <string name="notification_title_today">Vencimento Hoje</string>
+
+    <!-- Misc -->
+    <string name="loading">Carregando…</string>
+    <string name="error_generic">Ocorreu um erro. Tente novamente.</string>
+    <string name="confirm">Confirmar</string>
+    <string name="period_filter">Filtrar por período</string>
+    <string name="sort_options">Ordenar</string>
+    <string name="original_due_date">Vencimento Original</string>
+    <string name="created_at">Criado em</string>
+    <string name="updated_at">Atualizado em</string>
+</resources>
