@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "000000000000",
-    "project_id": "YOUR-FIREBASE-PROJECT-ID",
-    "storage_bucket": "YOUR-FIREBASE-PROJECT-ID.appspot.com"
+    "project_number": "696052822175",
+    "project_id": "contas-e21c3",
+    "storage_bucket": "contas-e21c3.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:696052822175:android:7f2c88a4d91dcc3e7d32aa",
         "android_client_info": {
           "package_name": "com.loantrack.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com",
+          "client_id": "696052822175-mmibok3b9mmqus0hpekbmvgmp7mq9a55.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+          "current_key": "AIzaSyBkz4fC3e5uVGRp8FJXXNojZLhjUG8jrzY"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com",
+              "client_id": "696052822175-mmibok3b9mmqus0hpekbmvgmp7mq9a55.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
