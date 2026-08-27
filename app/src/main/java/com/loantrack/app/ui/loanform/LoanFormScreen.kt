@@ -25,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -46,10 +45,17 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.loantrack.app.R
-import com.loantrack.app.data.model.PaymentType
 import com.loantrack.app.util.DateUtils
+import java.text.NumberFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
+
+private fun formatCents(rawDigits: String): String {
+    if (rawDigits.isEmpty()) return ""
+    val cents = rawDigits.toLongOrNull() ?: 0L
+    return NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(cents / 100.0)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -170,6 +176,7 @@ fun LoanFormScreen(
                     onValueChange = { viewModel.updateContact(it) },
                     label = { Text(stringResource(R.string.contact)) },
                     modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     singleLine = true
                 )
 
@@ -206,20 +213,20 @@ fun LoanFormScreen(
                 )
 
                 OutlinedTextField(
-                    value = uiState.amountLent,
+                    value = formatCents(uiState.amountLent),
                     onValueChange = { viewModel.updateAmountLent(it) },
                     label = { Text(stringResource(R.string.amount_lent)) },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true
                 )
 
                 OutlinedTextField(
-                    value = uiState.amountToReceive,
+                    value = formatCents(uiState.amountToReceive),
                     onValueChange = { viewModel.updateAmountToReceive(it) },
                     label = { Text(stringResource(R.string.amount_to_receive)) },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = uiState.amountError != null,
                     supportingText = uiState.amountError?.let { { Text(it) } },
                     singleLine = true
@@ -242,49 +249,6 @@ fun LoanFormScreen(
                             color = MaterialTheme.colorScheme.error
                         )
                     }
-                }
-
-                Text(
-                    text = stringResource(R.string.payment_type),
-                    style = MaterialTheme.typography.labelLarge
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        RadioButton(
-                            selected = uiState.paymentType == PaymentType.SINGLE,
-                            onClick = { viewModel.updatePaymentType(PaymentType.SINGLE) }
-                        )
-                        Text(stringResource(R.string.payment_type_single))
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        RadioButton(
-                            selected = uiState.paymentType == PaymentType.INSTALLMENT,
-                            onClick = { viewModel.updatePaymentType(PaymentType.INSTALLMENT) }
-                        )
-                        Text(stringResource(R.string.payment_type_installment))
-                    }
-                }
-
-                if (uiState.paymentType == PaymentType.INSTALLMENT) {
-                    OutlinedTextField(
-                        value = uiState.installmentsTotal,
-                        onValueChange = { viewModel.updateInstallmentsTotal(it) },
-                        label = { Text(stringResource(R.string.installments_total)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
                 }
 
                 OutlinedTextField(

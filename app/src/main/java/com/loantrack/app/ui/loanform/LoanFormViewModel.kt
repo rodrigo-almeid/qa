@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Date
 import javax.inject.Inject
+import kotlin.math.roundToLong
 
 data class LoanFormUiState(
     val isLoading: Boolean = false,
@@ -24,11 +25,9 @@ data class LoanFormUiState(
     val debtorName: String = "",
     val contact: String = "",
     val loanDate: Date = DateUtils.today(),
-    val dueDate: Date = DateUtils.today(),
+    val dueDate: Date = DateUtils.addMonths(DateUtils.today(), 1),
     val amountLent: String = "",
     val amountToReceive: String = "",
-    val paymentType: PaymentType = PaymentType.SINGLE,
-    val installmentsTotal: String = "",
     val notes: String = "",
     val isEditMode: Boolean = false,
     val showAmountAlert: Boolean = false,
@@ -65,10 +64,8 @@ class LoanFormViewModel @Inject constructor(
                     contact = loan.contact,
                     loanDate = loan.loanDate.toDate(),
                     dueDate = loan.dueDate.toDate(),
-                    amountLent = loan.amountLent.toString(),
-                    amountToReceive = loan.amountToReceive.toString(),
-                    paymentType = PaymentType.valueOf(loan.paymentType),
-                    installmentsTotal = loan.installmentsTotal?.toString() ?: "",
+                    amountLent = (loan.amountLent * 100).roundToLong().toString(),
+                    amountToReceive = (loan.amountToReceive * 100).roundToLong().toString(),
                     notes = loan.notes ?: ""
                 )
             } else {
@@ -78,38 +75,47 @@ class LoanFormViewModel @Inject constructor(
     }
 
     fun updateDebtorName(name: String) = updateState { copy(debtorName = name, nameError = null) }
-    fun updateContact(contact: String) = updateState { copy(contact = contact) }
+
+    fun updateContact(raw: String) = updateState { copy(contact = applyPhoneMask(raw)) }
+
     fun updateLoanDate(date: Date) {
+        val state = _uiState.value
+        val newDueDate = if (!state.isEditMode) DateUtils.addMonths(date, 1) else state.dueDate
         updateState {
             copy(
                 loanDate = date,
-                dueDateError = if (dueDate.before(date)) "Data de vencimento inválida" else null
+                dueDate = newDueDate,
+                dueDateError = if (newDueDate.before(date)) "Data de vencimento inválida" else null
             )
         }
     }
+
     fun updateDueDate(date: Date) {
         val state = _uiState.value
         val error = if (date.before(state.loanDate)) "A data de vencimento deve ser igual ou posterior à data do empréstimo" else null
         updateState { copy(dueDate = date, dueDateError = error) }
     }
-    fun updateAmountLent(amount: String) {
-        updateState { copy(amountLent = amount) }
+
+    fun updateAmountLent(input: String) {
+        val digits = input.filter { it.isDigit() }.trimStart('0').ifEmpty { "" }
+        updateState { copy(amountLent = digits) }
         checkAmountAlert()
     }
-    fun updateAmountToReceive(amount: String) {
-        updateState { copy(amountToReceive = amount, amountError = null) }
+
+    fun updateAmountToReceive(input: String) {
+        val digits = input.filter { it.isDigit() }.trimStart('0').ifEmpty { "" }
+        updateState { copy(amountToReceive = digits, amountError = null) }
         checkAmountAlert()
     }
-    fun updatePaymentType(type: PaymentType) = updateState { copy(paymentType = type) }
-    fun updateInstallmentsTotal(count: String) = updateState { copy(installmentsTotal = count) }
+
     fun updateNotes(notes: String) = updateState { copy(notes = notes) }
     fun clearError() = updateState { copy(error = null) }
 
     private fun checkAmountAlert() {
         val state = _uiState.value
-        val lent = state.amountLent.toDoubleOrNull() ?: return
-        val toReceive = state.amountToReceive.toDoubleOrNull() ?: return
-        updateState { copy(showAmountAlert = toReceive < lent) }
+        val lent = state.amountLent.toLongOrNull() ?: return
+        val toReceive = state.amountToReceive.toLongOrNull() ?: return
+        if (lent > 0 && toReceive > 0) updateState { copy(showAmountAlert = toReceive < lent) }
     }
 
     fun saveLoan() {
@@ -121,8 +127,8 @@ class LoanFormViewModel @Inject constructor(
             hasError = true
         }
 
-        val amountToReceive = state.amountToReceive.toDoubleOrNull()
-        if (amountToReceive == null || amountToReceive <= 0) {
+        val amountToReceiveLong = state.amountToReceive.toLongOrNull() ?: 0L
+        if (amountToReceiveLong <= 0) {
             updateState { copy(amountError = "O valor a receber deve ser maior que zero") }
             hasError = true
         }
@@ -142,7 +148,8 @@ class LoanFormViewModel @Inject constructor(
 
         viewModelScope.launch {
             updateState { copy(isLoading = true, showPaidEditConfirm = false) }
-            val amountLent = state.amountLent.toDoubleOrNull() ?: 0.0
+            val amountLent = (state.amountLent.toLongOrNull() ?: 0L) / 100.0
+            val amountToReceive = amountToReceiveLong / 100.0
             val now = Timestamp.now()
 
             val loan = Loan(
@@ -154,12 +161,11 @@ class LoanFormViewModel @Inject constructor(
                 dueDate = DateUtils.toTimestamp(state.dueDate),
                 originalDueDate = existingLoanNow?.originalDueDate ?: DateUtils.toTimestamp(state.dueDate),
                 amountLent = amountLent,
-                amountToReceive = amountToReceive!!,
+                amountToReceive = amountToReceive,
                 amountPaid = existingLoanNow?.amountPaid ?: 0.0,
-                paymentType = state.paymentType.name,
-                installmentsTotal = if (state.paymentType == PaymentType.INSTALLMENT)
-                    state.installmentsTotal.toIntOrNull() else null,
-                installmentsPaid = existingLoanNow?.installmentsPaid,
+                paymentType = PaymentType.SINGLE.name,
+                installmentsTotal = null,
+                installmentsPaid = null,
                 status = existingLoanNow?.status ?: LoanStatus.PENDING.name,
                 notes = state.notes.trim().ifBlank { null },
                 createdAt = existingLoanNow?.createdAt ?: now,
@@ -171,10 +177,7 @@ class LoanFormViewModel @Inject constructor(
                 updateState { copy(isLoading = false, isSaved = true) }
             } else {
                 updateState {
-                    copy(
-                        isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Erro ao salvar"
-                    )
+                    copy(isLoading = false, error = result.exceptionOrNull()?.message ?: "Erro ao salvar")
                 }
             }
         }
@@ -185,6 +188,20 @@ class LoanFormViewModel @Inject constructor(
     fun confirmPaidEdit() {
         updateState { copy(showPaidEditConfirm = false) }
         saveLoan()
+    }
+
+    private fun applyPhoneMask(input: String): String {
+        val digits = input.filter { it.isDigit() }.take(11)
+        return buildString {
+            digits.forEachIndexed { i, c ->
+                when (i) {
+                    0 -> append("($c")
+                    1 -> append("$c) ")
+                    7 -> append("-$c")
+                    else -> append(c)
+                }
+            }
+        }
     }
 
     private fun updateState(update: LoanFormUiState.() -> LoanFormUiState) {
