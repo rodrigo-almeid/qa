@@ -21,7 +21,6 @@ fun FilterTabs(
         LoanFilter.ALL to stringResource(R.string.filter_todos),
         LoanFilter.PENDING to stringResource(R.string.filter_pendentes),
         LoanFilter.OVERDUE to stringResource(R.string.filter_atrasados),
-        LoanFilter.PARTIAL to stringResource(R.string.filter_parciais),
         LoanFilter.PAID to stringResource(R.string.filter_pagos)
     )
 

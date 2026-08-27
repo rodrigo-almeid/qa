@@ -85,4 +85,13 @@ class LoanRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun getLoansOnce(userId: String): List<Loan> {
+        return try {
+            loansCollection(userId).get().await()
+                .documents.mapNotNull { it.toObject(Loan::class.java)?.copy(id = it.id) }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 }

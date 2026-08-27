@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +27,7 @@ import com.loantrack.app.ui.dashboard.components.SummaryCards
 fun DashboardScreen(
     onNavigateToAddLoan: () -> Unit,
     onNavigateToLoanDetail: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
     onSignOut: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
@@ -61,6 +63,9 @@ fun DashboardScreen(
                 actions = {
                     IconButton(onClick = { searchActive = !searchActive }) {
                         Icon(Icons.Default.Search, contentDescription = null)
+                    }
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = null)
                     }
                     Box {
                         IconButton(onClick = { showSortMenu = true }) {

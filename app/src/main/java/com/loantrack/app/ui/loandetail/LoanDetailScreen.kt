@@ -2,7 +2,6 @@ package com.loantrack.app.ui.loandetail
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -14,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -78,47 +76,6 @@ fun LoanDetailScreen(
                 TextButton(onClick = viewModel::dismissReopenDialog) { Text(stringResource(R.string.cancel)) }
             }
         )
-    }
-
-    if (uiState.showPartialPaymentSheet) {
-        ModalBottomSheet(onDismissRequest = viewModel::dismissPartialPaymentSheet) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.pagamento_parcial),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                uiState.loan?.let { loan ->
-                    Text(
-                        text = "Saldo restante: ${CurrencyUtils.format(loan.remainingBalance())}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                }
-                OutlinedTextField(
-                    value = uiState.partialAmount,
-                    onValueChange = viewModel::updatePartialAmount,
-                    label = { Text(stringResource(R.string.partial_amount)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    prefix = { Text("R$ ") },
-                    singleLine = true
-                )
-                Button(
-                    onClick = viewModel::makePartialPayment,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = uiState.partialAmount.toDoubleOrNull()?.let { it > 0 } == true
-                ) {
-                    Text(stringResource(R.string.confirm_partial_payment))
-                }
-            }
-        }
     }
 
     Scaffold(
@@ -240,11 +197,6 @@ fun LoanDetailScreen(
                             onClick = viewModel::markAsPaid,
                             modifier = Modifier.fillMaxWidth()
                         ) { Text(stringResource(R.string.dar_baixa_total)) }
-
-                        OutlinedButton(
-                            onClick = viewModel::showPartialPaymentSheet,
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text(stringResource(R.string.pagamento_parcial)) }
                     } else {
                         OutlinedButton(
                             onClick = viewModel::showReopenDialog,

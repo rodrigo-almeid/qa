@@ -14,6 +14,7 @@ import com.loantrack.app.data.model.remainingBalance
 import com.loantrack.app.domain.usecase.GetLoansUseCase
 import com.loantrack.app.domain.usecase.MarkPaidUseCase
 import com.loantrack.app.util.DateUtils
+import com.loantrack.app.worker.EmailReportWorker
 import com.loantrack.app.worker.LoanStatusWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +26,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 enum class LoanFilter {
-    ALL, PENDING, OVERDUE, PARTIAL, PAID
+    ALL, PENDING, OVERDUE, PAID
 }
 
 enum class SortOrder {
@@ -153,7 +154,6 @@ class DashboardViewModel @Inject constructor(
             LoanFilter.ALL -> result
             LoanFilter.PENDING -> result.filter { it.status == LoanStatus.PENDING.name }
             LoanFilter.OVERDUE -> result.filter { it.status == LoanStatus.OVERDUE.name }
-            LoanFilter.PARTIAL -> result.filter { it.status == LoanStatus.PARTIAL.name }
             LoanFilter.PAID -> result.filter { it.status == LoanStatus.PAID.name }
         }
 
@@ -192,6 +192,20 @@ class DashboardViewModel @Inject constructor(
             "loan_status_worker",
             ExistingPeriodicWorkPolicy.KEEP,
             request
+        )
+
+        val emailRequest = PeriodicWorkRequestBuilder<EmailReportWorker>(1, TimeUnit.DAYS)
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
+            )
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            "email_report_worker",
+            ExistingPeriodicWorkPolicy.KEEP,
+            emailRequest
         )
     }
 }

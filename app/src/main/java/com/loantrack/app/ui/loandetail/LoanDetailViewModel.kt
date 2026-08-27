@@ -8,7 +8,6 @@ import com.loantrack.app.data.model.LoanStatus
 import com.loantrack.app.data.repository.LoanRepository
 import com.loantrack.app.domain.usecase.DeleteLoanUseCase
 import com.loantrack.app.domain.usecase.MarkPaidUseCase
-import com.loantrack.app.domain.usecase.PartialPaymentUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,16 +21,13 @@ data class LoanDetailUiState(
     val isDeleted: Boolean = false,
     val error: String? = null,
     val showDeleteDialog: Boolean = false,
-    val showPartialPaymentSheet: Boolean = false,
-    val showReopenDialog: Boolean = false,
-    val partialAmount: String = ""
+    val showReopenDialog: Boolean = false
 )
 
 @HiltViewModel
 class LoanDetailViewModel @Inject constructor(
     private val repository: LoanRepository,
     private val markPaidUseCase: MarkPaidUseCase,
-    private val partialPaymentUseCase: PartialPaymentUseCase,
     private val deleteLoanUseCase: DeleteLoanUseCase,
     private val auth: FirebaseAuth
 ) : ViewModel() {
@@ -50,11 +46,8 @@ class LoanDetailViewModel @Inject constructor(
 
     fun showDeleteDialog() = _uiState.value.let { _uiState.value = it.copy(showDeleteDialog = true) }
     fun dismissDeleteDialog() = _uiState.value.let { _uiState.value = it.copy(showDeleteDialog = false) }
-    fun showPartialPaymentSheet() = _uiState.value.let { _uiState.value = it.copy(showPartialPaymentSheet = true) }
-    fun dismissPartialPaymentSheet() = _uiState.value.let { _uiState.value = it.copy(showPartialPaymentSheet = false, partialAmount = "") }
     fun showReopenDialog() = _uiState.value.let { _uiState.value = it.copy(showReopenDialog = true) }
     fun dismissReopenDialog() = _uiState.value.let { _uiState.value = it.copy(showReopenDialog = false) }
-    fun updatePartialAmount(value: String) = _uiState.value.let { _uiState.value = it.copy(partialAmount = value) }
     fun clearError() = _uiState.value.let { _uiState.value = it.copy(error = null) }
 
     fun markAsPaid() {
@@ -64,21 +57,6 @@ class LoanDetailViewModel @Inject constructor(
             if (result.isSuccess) {
                 val updated = repository.getLoanById(userId, loan.id)
                 _uiState.value = _uiState.value.copy(loan = updated)
-            } else {
-                _uiState.value = _uiState.value.copy(error = result.exceptionOrNull()?.message)
-            }
-        }
-    }
-
-    fun makePartialPayment() {
-        val loan = _uiState.value.loan ?: return
-        val amount = _uiState.value.partialAmount.toDoubleOrNull() ?: return
-        if (amount <= 0) return
-        viewModelScope.launch {
-            val result = partialPaymentUseCase(userId, loan, amount)
-            if (result.isSuccess) {
-                val updated = repository.getLoanById(userId, loan.id)
-                _uiState.value = _uiState.value.copy(loan = updated, showPartialPaymentSheet = false, partialAmount = "")
             } else {
                 _uiState.value = _uiState.value.copy(error = result.exceptionOrNull()?.message)
             }
