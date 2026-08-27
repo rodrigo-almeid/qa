@@ -6,7 +6,7 @@ import androidx.core.content.edit
 object EmailConfig {
     private const val PREFS = "email_prefs"
     private const val KEY_PASSWORD = "smtp_password"
-    private const val SMTP_FROM = "br6rodrigo@gmail.com"
+    private const val SMTP_FROM = "almeidainteligencia@gmail.com"
     private const val SMTP_HOST = "smtp.gmail.com"
     private const val SMTP_PORT = 587
 

@@ -65,7 +65,7 @@ fun SettingsScreen(
 
             Text("E-mail remetente", style = MaterialTheme.typography.labelMedium)
             OutlinedTextField(
-                value = "br6rodrigo@gmail.com",
+                value = "almeidainteligencia@gmail.com",
                 onValueChange = {},
                 modifier = Modifier.fillMaxWidth(),
                 enabled = false,
