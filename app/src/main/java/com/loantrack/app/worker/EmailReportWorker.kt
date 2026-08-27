@@ -151,11 +151,11 @@ class EmailReportWorker @AssistedInject constructor(
 
         val session = Session.getInstance(props, object : javax.mail.Authenticator() {
             override fun getPasswordAuthentication() =
-                javax.mail.PasswordAuthentication(EmailConfig.getSmtpFrom(), password)
+                javax.mail.PasswordAuthentication(EmailConfig.getSmtpFrom(applicationContext), password)
         })
 
         val message = MimeMessage(session).apply {
-            setFrom(InternetAddress(EmailConfig.getSmtpFrom(), "LoanTrack"))
+            setFrom(InternetAddress(EmailConfig.getSmtpFrom(applicationContext), "LoanTrack"))
             setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
             subject = "LoanTrack - Relatorio ${DateUtils.formatDate(com.google.firebase.Timestamp(date))}"
             setContent(html, "text/html; charset=utf-8")

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 data class SettingsUiState(
+    val email: String = "",
     val password: String = "",
     val savedSuccess: Boolean = false
 )
@@ -20,15 +21,21 @@ class SettingsViewModel @Inject constructor(
 ) : AndroidViewModel(app) {
 
     private val _uiState = MutableStateFlow(SettingsUiState(
+        email = EmailConfig.getSmtpFrom(app),
         password = EmailConfig.getPassword(app)
     ))
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    fun updateEmail(value: String) {
+        _uiState.value = _uiState.value.copy(email = value, savedSuccess = false)
+    }
 
     fun updatePassword(value: String) {
         _uiState.value = _uiState.value.copy(password = value, savedSuccess = false)
     }
 
     fun save() {
+        EmailConfig.saveEmail(app, _uiState.value.email)
         EmailConfig.savePassword(app, _uiState.value.password)
         _uiState.value = _uiState.value.copy(savedSuccess = true)
     }

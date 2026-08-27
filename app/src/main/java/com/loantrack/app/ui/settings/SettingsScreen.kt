@@ -65,11 +65,11 @@ fun SettingsScreen(
 
             Text("E-mail remetente", style = MaterialTheme.typography.labelMedium)
             OutlinedTextField(
-                value = "almeidainteligencia@gmail.com",
-                onValueChange = {},
+                value = uiState.email,
+                onValueChange = viewModel::updateEmail,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = false,
-                label = { Text("Enviado de") }
+                label = { Text("Enviado de") },
+                singleLine = true
             )
 
             Text("Senha de app do Gmail", style = MaterialTheme.typography.labelMedium)
