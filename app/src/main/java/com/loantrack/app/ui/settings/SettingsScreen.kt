@@ -65,14 +65,14 @@ fun SettingsScreen(
 
             Text("E-mail remetente", style = MaterialTheme.typography.labelMedium)
             OutlinedTextField(
-                value = "almeidainteligencia@mail.com",
+                value = "br6rodrigo@gmail.com",
                 onValueChange = {},
                 modifier = Modifier.fillMaxWidth(),
                 enabled = false,
                 label = { Text("Enviado de") }
             )
 
-            Text("Senha do mail.com", style = MaterialTheme.typography.labelMedium)
+            Text("Senha de app do Gmail", style = MaterialTheme.typography.labelMedium)
             OutlinedTextField(
                 value = uiState.password,
                 onValueChange = viewModel::updatePassword,
