@@ -24,9 +24,12 @@ fun SettingsScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(uiState.savedSuccess) {
+    LaunchedEffect(uiState.savedSuccess, uiState.sendingNow) {
         if (uiState.savedSuccess) {
             snackbarHostState.showSnackbar("Configurações salvas!")
+            viewModel.clearSaved()
+        } else if (uiState.sendingNow) {
+            snackbarHostState.showSnackbar("E-mail sendo enviado em segundo plano...")
             viewModel.clearSaved()
         }
     }
@@ -96,6 +99,14 @@ fun SettingsScreen(
                 enabled = uiState.password.isNotBlank()
             ) {
                 Text("Salvar configurações")
+            }
+
+            OutlinedButton(
+                onClick = viewModel::sendNow,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = uiState.password.isNotBlank()
+            ) {
+                Text("Enviar relatório agora")
             }
         }
     }
