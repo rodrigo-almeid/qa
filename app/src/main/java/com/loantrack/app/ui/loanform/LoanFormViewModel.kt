@@ -9,6 +9,7 @@ import com.loantrack.app.data.model.LoanStatus
 import com.loantrack.app.data.model.PaymentType
 import com.loantrack.app.data.repository.LoanRepository
 import com.loantrack.app.domain.usecase.SaveLoanUseCase
+import com.loantrack.app.util.BrazilianPhoneTransformation
 import com.loantrack.app.util.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,7 +62,7 @@ class LoanFormViewModel @Inject constructor(
                     isLoading = false,
                     isEditMode = true,
                     debtorName = loan.debtorName,
-                    contact = loan.contact,
+                    contact = loan.contact.filter { it.isDigit() },
                     loanDate = loan.loanDate.toDate(),
                     dueDate = loan.dueDate.toDate(),
                     amountLent = (loan.amountLent * 100).roundToLong().toString(),
@@ -76,7 +77,10 @@ class LoanFormViewModel @Inject constructor(
 
     fun updateDebtorName(name: String) = updateState { copy(debtorName = name, nameError = null) }
 
-    fun updateContact(raw: String) = updateState { copy(contact = applyPhoneMask(raw)) }
+    fun updateContact(raw: String) {
+        val digits = raw.filter { it.isDigit() }.take(11)
+        updateState { copy(contact = digits) }
+    }
 
     fun updateLoanDate(date: Date) {
         val state = _uiState.value
@@ -156,7 +160,7 @@ class LoanFormViewModel @Inject constructor(
                 id = existingLoanNow?.id ?: "",
                 userId = userId,
                 debtorName = state.debtorName.trim(),
-                contact = state.contact.trim(),
+                contact = BrazilianPhoneTransformation.format(state.contact.trim()),
                 loanDate = DateUtils.toTimestamp(state.loanDate),
                 dueDate = DateUtils.toTimestamp(state.dueDate),
                 originalDueDate = existingLoanNow?.originalDueDate ?: DateUtils.toTimestamp(state.dueDate),
@@ -188,20 +192,6 @@ class LoanFormViewModel @Inject constructor(
     fun confirmPaidEdit() {
         updateState { copy(showPaidEditConfirm = false) }
         saveLoan()
-    }
-
-    private fun applyPhoneMask(input: String): String {
-        val digits = input.filter { it.isDigit() }.take(11)
-        return buildString {
-            digits.forEachIndexed { i, c ->
-                when (i) {
-                    0 -> append("($c")
-                    1 -> append("$c) ")
-                    7 -> append("-$c")
-                    else -> append(c)
-                }
-            }
-        }
     }
 
     private fun updateState(update: LoanFormUiState.() -> LoanFormUiState) {

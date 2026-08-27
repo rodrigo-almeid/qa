@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.loantrack.app.R
+import com.loantrack.app.util.BrazilianPhoneTransformation
 import com.loantrack.app.util.DateUtils
 import java.text.NumberFormat
 import java.util.Calendar
@@ -177,6 +178,7 @@ fun LoanFormScreen(
                     label = { Text(stringResource(R.string.contact)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    visualTransformation = remember { BrazilianPhoneTransformation() },
                     singleLine = true
                 )
 
