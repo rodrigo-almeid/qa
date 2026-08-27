@@ -46,17 +46,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.loantrack.app.R
 import com.loantrack.app.util.BrazilianPhoneTransformation
+import com.loantrack.app.util.CurrencyVisualTransformation
 import com.loantrack.app.util.DateUtils
-import java.text.NumberFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
-
-private fun formatCents(rawDigits: String): String {
-    if (rawDigits.isEmpty()) return ""
-    val cents = rawDigits.toLongOrNull() ?: 0L
-    return NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(cents / 100.0)
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -215,20 +208,22 @@ fun LoanFormScreen(
                 )
 
                 OutlinedTextField(
-                    value = formatCents(uiState.amountLent),
+                    value = uiState.amountLent,
                     onValueChange = { viewModel.updateAmountLent(it) },
                     label = { Text(stringResource(R.string.amount_lent)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = remember { CurrencyVisualTransformation() },
                     singleLine = true
                 )
 
                 OutlinedTextField(
-                    value = formatCents(uiState.amountToReceive),
+                    value = uiState.amountToReceive,
                     onValueChange = { viewModel.updateAmountToReceive(it) },
                     label = { Text(stringResource(R.string.amount_to_receive)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = remember { CurrencyVisualTransformation() },
                     isError = uiState.amountError != null,
                     supportingText = uiState.amountError?.let { { Text(it) } },
                     singleLine = true
