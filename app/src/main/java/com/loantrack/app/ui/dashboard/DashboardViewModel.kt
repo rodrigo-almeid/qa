@@ -137,6 +137,16 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
+    fun getLoansForExport(filter: LoanFilter): List<Loan> {
+        val loans = _uiState.value.loans
+        return when (filter) {
+            LoanFilter.ALL -> loans
+            LoanFilter.PENDING -> loans.filter { it.status == LoanStatus.PENDING.name }
+            LoanFilter.OVERDUE -> loans.filter { it.status == LoanStatus.OVERDUE.name }
+            LoanFilter.PAID -> loans.filter { it.status == LoanStatus.PAID.name }
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }

@@ -9,18 +9,22 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.loantrack.app.R
+import com.loantrack.app.ui.dashboard.components.ExportDialog
 import com.loantrack.app.ui.dashboard.components.FilterTabs
 import com.loantrack.app.ui.dashboard.components.LoanCard
 import com.loantrack.app.ui.dashboard.components.SummaryCards
+import com.loantrack.app.util.ExportUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,9 +36,29 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     var showSortMenu by remember { mutableStateOf(false) }
     var searchActive by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
     var confirmPayLoan by remember { mutableStateOf<com.loantrack.app.data.model.Loan?>(null) }
+
+    if (showExportDialog) {
+        ExportDialog(
+            onDismiss = { showExportDialog = false },
+            onExport = { filter ->
+                showExportDialog = false
+                val loans = viewModel.getLoansForExport(filter)
+                val filterLabel = when (filter) {
+                    LoanFilter.ALL -> "todos"
+                    LoanFilter.PENDING -> "pendentes"
+                    LoanFilter.OVERDUE -> "atrasados"
+                    LoanFilter.PAID -> "pagos"
+                }
+                val file = ExportUtils.createXls(context, loans, filterLabel)
+                ExportUtils.shareFile(context, file)
+            }
+        )
+    }
 
     if (confirmPayLoan != null) {
         val loan = confirmPayLoan!!
@@ -63,6 +87,9 @@ fun DashboardScreen(
                 actions = {
                     IconButton(onClick = { searchActive = !searchActive }) {
                         Icon(Icons.Default.Search, contentDescription = null)
+                    }
+                    IconButton(onClick = { showExportDialog = true }) {
+                        Icon(Icons.Default.Share, contentDescription = "Exportar")
                     }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = null)

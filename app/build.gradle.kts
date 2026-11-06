@@ -52,6 +52,8 @@ android {
             excludes += "META-INF/NOTICE.md"
             excludes += "META-INF/LICENSE"
             excludes += "META-INF/NOTICE"
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/LICENSE-notice.md"
         }
     }
 }
@@ -97,6 +99,9 @@ dependencies {
     // JavaMail for SMTP email reports
     implementation(libs.android.mail)
     implementation(libs.android.activation)
+
+    // Apache POI for XLS export
+    implementation(libs.apache.poi)
 
     // Testing
     testImplementation(libs.junit)
