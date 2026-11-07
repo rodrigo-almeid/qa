@@ -48,12 +48,6 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            excludes += "META-INF/LICENSE.md"
-            excludes += "META-INF/NOTICE.md"
-            excludes += "META-INF/LICENSE"
-            excludes += "META-INF/NOTICE"
-            excludes += "META-INF/DEPENDENCIES"
-            excludes += "META-INF/LICENSE-notice.md"
         }
     }
 }
@@ -95,13 +89,6 @@ dependencies {
 
     // Google Sign-In
     implementation(libs.play.services.auth)
-
-    // JavaMail for SMTP email reports
-    implementation(libs.android.mail)
-    implementation(libs.android.activation)
-
-    // Apache POI for XLS export
-    implementation(libs.apache.poi)
 
     // Biometric authentication
     implementation(libs.biometric)

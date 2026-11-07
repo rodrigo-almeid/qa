@@ -14,7 +14,6 @@ import com.loantrack.app.data.model.remainingBalance
 import com.loantrack.app.domain.usecase.GetLoansUseCase
 import com.loantrack.app.domain.usecase.MarkPaidUseCase
 import com.loantrack.app.util.DateUtils
-import com.loantrack.app.worker.EmailReportWorker
 import com.loantrack.app.worker.LoanStatusWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -137,16 +136,6 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    fun getLoansForExport(filter: LoanFilter): List<Loan> {
-        val loans = _uiState.value.loans
-        return when (filter) {
-            LoanFilter.ALL -> loans
-            LoanFilter.PENDING -> loans.filter { it.status == LoanStatus.PENDING.name }
-            LoanFilter.OVERDUE -> loans.filter { it.status == LoanStatus.OVERDUE.name }
-            LoanFilter.PAID -> loans.filter { it.status == LoanStatus.PAID.name }
-        }
-    }
-
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
@@ -202,20 +191,6 @@ class DashboardViewModel @Inject constructor(
             "loan_status_worker",
             ExistingPeriodicWorkPolicy.KEEP,
             request
-        )
-
-        val emailRequest = PeriodicWorkRequestBuilder<EmailReportWorker>(1, TimeUnit.DAYS)
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build()
-            )
-            .build()
-
-        workManager.enqueueUniquePeriodicWork(
-            "email_report_worker",
-            ExistingPeriodicWorkPolicy.KEEP,
-            emailRequest
         )
     }
 }

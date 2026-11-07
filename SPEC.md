@@ -28,10 +28,7 @@
 | Persistência remota | Firebase Firestore (Kotlin SDK) |
 | Autenticação | Firebase Auth + Google Sign-In OAuth 2.0 |
 | Background jobs | WorkManager + HiltWorker |
-| E-mail | JavaMail for Android (smtp.gmail.com:587, STARTTLS) |
-| Exportação | Apache POI (HSSFWorkbook — formato .xls) |
 | Biometria | androidx.biometric:biometric |
-| Compartilhamento | FileProvider + Android Share Sheet |
 
 ---
 
@@ -49,13 +46,12 @@ app/
 │   ├── loanform/       # Cadastro e edição de empréstimo
 │   ├── loandetail/     # Detalhes + dar baixa
 │   ├── login/          # Login Google + compliance LGPD
-│   ├── settings/       # Configurações de e-mail
 │   ├── navigation/     # AppNavigation (NavHost)
 │   └── theme/          # Color, Typography, Theme
-├── util/               # DateUtils, CurrencyUtils, EmailConfig, SecurityPrefs,
-│                       # BiometricHelper, ExportUtils, BrazilianPhoneTransformation,
+├── util/               # DateUtils, CurrencyUtils, SecurityPrefs,
+│                       # BiometricHelper, BrazilianPhoneTransformation,
 │                       # CurrencyVisualTransformation
-├── worker/             # EmailReportWorker, LoanStatusWorker
+├── worker/             # LoanStatusWorker
 └── di/                 # AppModule, FirebaseModule, WorkManagerModule
 ```
 
@@ -119,7 +115,6 @@ app/
 - Ordenação: por vencimento, valor ou nome.
 - Cards de resumo: total em aberto e recebido no mês.
 - Swipe/botão "Dar Baixa" direto do card (confirmação via dialog).
-- Botão de exportar (ícone de compartilhamento) → gera XLS e abre Share Sheet.
 - FAB para novo empréstimo.
 
 ---
@@ -156,15 +151,6 @@ app/
 
 ---
 
-### 5. Configurações
-
-- Campo de e-mail remetente (padrão: `almeidainteligencia@gmail.com`).
-- Campo de senha de app do Gmail (armazenada em SharedPreferences — **nunca hardcoded**).
-- Botão "Salvar configurações".
-- Botão "Enviar relatório agora" (dispara `EmailReportWorker` via WorkManager).
-
----
-
 ## Funcionalidades de Background
 
 ### WorkManager
@@ -172,24 +158,6 @@ app/
 | Worker | Frequência | Função |
 |---|---|---|
 | `LoanStatusWorker` | Diária | Atualiza status para `OVERDUE` quando vencimento passou |
-| `EmailReportWorker` | Diária | Envia relatório HTML por e-mail para o usuário logado |
-
-### Relatório por E-mail
-- Protocolo: SMTP Gmail (`smtp.gmail.com:587`, STARTTLS).
-- Remetente: configurável nas Configurações.
-- Destinatário: e-mail da conta Google do usuário logado.
-- Conteúdo: resumo de empréstimos ativos, atrasados e pagos em HTML.
-
----
-
-## Exportação XLS
-
-- Botão na barra superior do Dashboard (ícone de compartilhamento).
-- Bottom sheet com filtro: Todos / Pendentes / Atrasados / Pagos.
-- Gera arquivo `.xls` (Apache POI — HSSF) com colunas:
-  - Devedor, Contato, Valor Emprestado, Valor a Receber, Data Empréstimo, Vencimento, Status, Observações.
-- Abre Share Sheet do Android: WhatsApp, Gmail, Drive, etc.
-- Arquivo salvo temporariamente em `cacheDir/exports/` via `FileProvider`.
 
 ---
 
@@ -208,7 +176,6 @@ app/
 ### Armazenamento
 - Dados de empréstimos: Firebase Firestore (criptografado em trânsito via TLS e em repouso).
 - Configurações do app: SharedPreferences local.
-- Senha de app Gmail: SharedPreferences — **nunca** armazenada em texto no código-fonte.
 
 ### LGPD (Lei 13.709/2018)
 - Aceite explícito de Termos de Uso e Política de Privacidade no primeiro acesso.
