@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoanTrack — Painel Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand:       #1B5E20;
+      --brand-light: #2E7D32;
+      --surface:     #ffffff;
+      --surface-alt: #f5f7fa;
+      --border:      #e0e4ea;
+      --text:        #1a1f2e;
+      --text-muted:  #6b7280;
+      --danger:      #d32f2f;
+      --danger-bg:   #fdecea;
+      --success:     #2e7d32;
+      --success-bg:  #e8f5e9;
+
+      --bronze:      #CD7F32;
+      --bronze-fg:   #fff;
+      --silver:      #9E9E9E;
+      --silver-fg:   #fff;
+      --gold:        #FFC107;
+      --gold-fg:     #4E3600;
+
+      --radius:   8px;
+      --shadow:   0 2px 8px rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--surface-alt);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Login ───────────────────────────────────────────── */
+    #login-view {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-card .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .login-card .logo-icon {
+      width: 40px; height: 40px;
+      background: var(--brand);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 20px; font-weight: 700;
+    }
+
+    .login-card h1 { font-size: 1.3rem; font-weight: 700; }
+    .login-card p  { font-size: .85rem; color: var(--text-muted); margin-top: 2px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .field label { font-size: .85rem; font-weight: 500; color: var(--text-muted); }
+    .field input {
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .field input:focus { border-color: var(--brand); }
+
+    #login-error {
+      display: none;
+      background: var(--danger-bg);
+      color: var(--danger);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: .85rem;
+      margin-bottom: 16px;
+    }
+
+    .btn-primary {
+      width: 100%; padding: 11px;
+      background: var(--brand); color: #fff;
+      border: none; border-radius: var(--radius);
+      font-size: .95rem; font-weight: 600;
+      cursor: pointer; transition: background .15s;
+    }
+    .btn-primary:hover  { background: var(--brand-light); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+    /* ── Admin panel ─────────────────────────────────────── */
+    #admin-view { display: none; }
+
+    header {
+      background: var(--brand);
+      color: #fff;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+      box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    }
+
+    .header-left {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .header-logo {
+      width: 32px; height: 32px;
+      background: rgba(255,255,255,.2);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700;
+    }
+
+    header h1 { font-size: 1rem; font-weight: 600; }
+    header small { font-size: .75rem; opacity: .8; display: block; margin-top: 1px; }
+
+    .btn-logout {
+      padding: 7px 16px;
+      background: rgba(255,255,255,.15);
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,.35);
+      border-radius: 20px;
+      font-size: .85rem; font-weight: 500;
+      cursor: pointer; transition: background .15s;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,.25); }
+
+    main { padding: 28px 24px; max-width: 1100px; margin: 0 auto; }
+
+    .panel-title {
+      font-size: 1.1rem; font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .panel-subtitle {
+      font-size: .85rem; color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Stats row */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 16px 18px;
+    }
+
+    .stat-card .stat-value {
+      font-size: 1.6rem; font-weight: 700;
+      line-height: 1;
+    }
+    .stat-card .stat-label {
+      font-size: .78rem; color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Table wrapper */
+    .table-wrap {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .table-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .table-header span { font-size: .9rem; font-weight: 600; }
+
+    .search-input {
+      padding: 7px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      font-size: .85rem;
+      outline: none;
+      width: 220px;
+      transition: border-color .15s;
+    }
+    .search-input:focus { border-color: var(--brand); }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead th {
+      text-align: left;
+      padding: 10px 16px;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text-muted);
+      background: var(--surface-alt);
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fafbfd; }
+
+    td { padding: 12px 16px; font-size: .9rem; vertical-align: middle; }
+
+    .user-name  { font-weight: 500; }
+    .user-email { font-size: .82rem; color: var(--text-muted); }
+
+    /* Tier badge */
+    .tier-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: .78rem; font-weight: 600;
+      white-space: nowrap;
+    }
+    .tier-BRONZE { background: var(--bronze); color: var(--bronze-fg); }
+    .tier-SILVER { background: var(--silver); color: var(--silver-fg); }
+    .tier-GOLD   { background: var(--gold);   color: var(--gold-fg);   }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: .78rem; font-weight: 600;
+    }
+    .status-ACTIVE  { background: var(--success-bg); color: var(--success); }
+    .status-BLOCKED { background: var(--danger-bg);  color: var(--danger);  }
+
+    /* Tier select */
+    .tier-select {
+      padding: 5px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: .85rem;
+      background: var(--surface);
+      cursor: pointer;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .tier-select:focus { border-color: var(--brand); }
+
+    /* Action buttons */
+    .btn-block {
+      padding: 5px 14px;
+      border-radius: 6px;
+      border: none;
+      font-size: .82rem; font-weight: 500;
+      cursor: pointer; transition: opacity .15s;
+      white-space: nowrap;
+    }
+    .btn-block:hover { opacity: .8; }
+    .btn-block.block   { background: var(--danger-bg);  color: var(--danger);  }
+    .btn-block.unblock { background: var(--success-bg); color: var(--success); }
+
+    .saving-indicator {
+      font-size: .78rem; color: var(--text-muted);
+      display: none;
+    }
+
+    /* Loading */
+    #loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+      font-size: .9rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px;
+      padding: 12px 20px;
+      border-radius: var(--radius);
+      font-size: .88rem; font-weight: 500;
+      color: #fff;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .2s, transform .2s;
+      pointer-events: none;
+      z-index: 100;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.ok  { background: var(--success); }
+    #toast.err { background: var(--danger); }
+
+    /* Firestore rules hint */
+    .rules-hint {
+      margin-top: 24px;
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      font-size: .82rem;
+      color: #5d4037;
+    }
+    .rules-hint summary { font-weight: 600; cursor: pointer; }
+    .rules-hint pre {
+      margin-top: 10px;
+      background: #fff3e0;
+      border-radius: 6px;
+      padding: 12px;
+      overflow-x: auto;
+      font-size: .78rem;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 700px) {
+      td:nth-child(2), th:nth-child(2) { display: none; }
+      .search-input { width: 150px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ──────────────────────────────────────────── -->
+<div id="login-view">
+  <div class="login-card">
+    <div class="logo">
+      <div class="logo-icon">L</div>
+      <div>
+        <h1>LoanTrack</h1>
+        <p>Painel Administrativo</p>
+      </div>
+    </div>
+
+    <div id="login-error"></div>
+
+    <div class="field">
+      <label for="email">E-mail</label>
+      <input type="email" id="email" placeholder="admin@email.com" autocomplete="username">
+    </div>
+    <div class="field">
+      <label for="password">Senha</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <button class="btn-primary" id="login-btn">Entrar</button>
+  </div>
+</div>
+
+<!-- ── ADMIN PANEL ─────────────────────────────────────── -->
+<div id="admin-view">
+  <header>
+    <div class="header-left">
+      <div class="header-logo">L</div>
+      <div>
+        <h1>LoanTrack — Painel Admin</h1>
+        <small id="admin-email-label"></small>
+      </div>
+    </div>
+    <button class="btn-logout" id="logout-btn">Sair</button>
+  </header>
+
+  <main>
+    <div class="panel-title">Gerenciamento de usuários</div>
+    <div class="panel-subtitle">Altere o plano e bloqueie o acesso dos usuários em tempo real.</div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-label">Usuários cadastrados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-active" style="color:var(--success)">—</div>
+        <div class="stat-label">Ativos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-blocked" style="color:var(--danger)">—</div>
+        <div class="stat-label">Bloqueados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-bronze" style="color:var(--bronze)">—</div>
+        <div class="stat-label">Perfil Bronze</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <span>Usuários</span>
+        <input class="search-input" id="search" type="search" placeholder="Buscar por nome ou e-mail…">
+      </div>
+
+      <div id="loading"><span class="spinner"></span>Carregando usuários…</div>
+
+      <table id="users-table" style="display:none">
+        <thead>
+          <tr>
+            <th>Usuário</th>
+            <th>E-mail</th>
+            <th>Plano</th>
+            <th>Status</th>
+            <th>Última atualização</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody"></tbody>
+      </table>
+    </div>
+
+    <details class="rules-hint">
+      <summary>⚠️ Regras do Firestore recomendadas</summary>
+      <p style="margin-top:8px">Aplique estas regras no console Firebase → Firestore → Rules para proteger a escrita:</p>
+      <pre>rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      // Usuário lê seus próprios dados; admin lê qualquer um
+      allow read: if request.auth != null &&
+        (request.auth.uid == userId ||
+         request.auth.token.email == "almeidainteligencia@gmail.com");
+
+      // Apenas o admin escreve
+      allow write: if request.auth != null &&
+        request.auth.token.email == "almeidainteligencia@gmail.com";
+    }
+  }
+}</pre>
+    </details>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<!-- ── FIREBASE + LÓGICA ───────────────────────────────── -->
+<script type="module">
+import { initializeApp }
+  from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import {
+  getFirestore, collection, getDocs, doc, updateDoc, serverTimestamp, onSnapshot
+} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+/* ── Config ─────────────────────────────────────────────── */
+const firebaseConfig = {
+  apiKey:            "AIzaSyBkz4fC3e5uVGRp8FJXXNojZLhjUG8jrzY",
+  authDomain:        "contas-e21c3.firebaseapp.com",
+  projectId:         "contas-e21c3",
+  storageBucket:     "contas-e21c3.firebasestorage.app",
+  messagingSenderId: "696052822175",
+  // appId da versão Web: registre o app no Firebase Console e cole aqui
+  // appId: "1:696052822175:web:XXXXXXXXXXXXXXXX"
+};
+
+const ADMIN_EMAIL = "almeidainteligencia@gmail.com";
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+/* ── UI refs ────────────────────────────────────────────── */
+const loginView  = document.getElementById('login-view');
+const adminView  = document.getElementById('admin-view');
+const loginBtn   = document.getElementById('login-btn');
+const logoutBtn  = document.getElementById('logout-btn');
+const loginError = document.getElementById('login-error');
+const emailInput = document.getElementById('email');
+const passInput  = document.getElementById('password');
+const tbody      = document.getElementById('users-tbody');
+const table      = document.getElementById('users-table');
+const loading    = document.getElementById('loading');
+const searchInput = document.getElementById('search');
+const toast      = document.getElementById('toast');
+const adminLabel = document.getElementById('admin-email-label');
+
+let allUsers = [];
+let unsubscribeSnapshot = null;
+
+/* ── Toast ──────────────────────────────────────────────── */
+let toastTimer;
+function showToast(msg, type = 'ok') {
+  clearTimeout(toastTimer);
+  toast.textContent = msg;
+  toast.className = `show ${type}`;
+  toastTimer = setTimeout(() => { toast.className = ''; }, 3000);
+}
+
+/* ── Auth state ─────────────────────────────────────────── */
+onAuthStateChanged(auth, user => {
+  if (user && user.email === ADMIN_EMAIL) {
+    loginView.style.display  = 'none';
+    adminView.style.display  = 'block';
+    adminLabel.textContent   = user.email;
+    startListening();
+  } else {
+    if (user) {
+      // Logged in as non-admin
+      showError('Acesso restrito ao administrador.');
+      signOut(auth);
+    }
+    loginView.style.display  = 'flex';
+    adminView.style.display  = 'none';
+    stopListening();
+  }
+});
+
+/* ── Login ──────────────────────────────────────────────── */
+loginBtn.addEventListener('click', doLogin);
+[emailInput, passInput].forEach(el =>
+  el.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); })
+);
+
+async function doLogin() {
+  const email = emailInput.value.trim();
+  const pass  = passInput.value;
+  if (!email || !pass) { showError('Preencha e-mail e senha.'); return; }
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Entrando…';
+  hideError();
+
+  try {
+    const { user } = await signInWithEmailAndPassword(auth, email, pass);
+    if (user.email !== ADMIN_EMAIL) {
+      await signOut(auth);
+      showError('Acesso restrito ao administrador.');
+    }
+  } catch (err) {
+    showError(firebaseErrorMessage(err.code));
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Entrar';
+  }
+}
+
+function showError(msg) {
+  loginError.textContent = msg;
+  loginError.style.display = 'block';
+}
+function hideError() {
+  loginError.style.display = 'none';
+}
+
+/* ── Logout ─────────────────────────────────────────────── */
+logoutBtn.addEventListener('click', () => signOut(auth));
+
+/* ── Realtime listener ──────────────────────────────────── */
+function startListening() {
+  if (unsubscribeSnapshot) return;
+  unsubscribeSnapshot = onSnapshot(collection(db, 'users'), snap => {
+    allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderTable(searchInput.value);
+    renderStats();
+  }, err => {
+    loading.innerHTML = `<span style="color:var(--danger)">Erro ao carregar: ${err.message}</span>`;
+  });
+}
+
+function stopListening() {
+  if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+  allUsers = [];
+}
+
+/* ── Stats ──────────────────────────────────────────────── */
+function renderStats() {
+  document.getElementById('stat-total').textContent   = allUsers.length;
+  document.getElementById('stat-active').textContent  = allUsers.filter(u => (u.status || 'ACTIVE') === 'ACTIVE').length;
+  document.getElementById('stat-blocked').textContent = allUsers.filter(u => u.status === 'BLOCKED').length;
+  document.getElementById('stat-bronze').textContent  = allUsers.filter(u => (u.tier || 'BRONZE') === 'BRONZE').length;
+}
+
+/* ── Search ─────────────────────────────────────────────── */
+searchInput.addEventListener('input', () => renderTable(searchInput.value));
+
+/* ── Table render ───────────────────────────────────────── */
+function renderTable(query = '') {
+  loading.style.display = 'none';
+  table.style.display   = '';
+
+  const q = query.toLowerCase();
+  const filtered = q
+    ? allUsers.filter(u =>
+        (u.displayName || '').toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q)
+      )
+    : allUsers;
+
+  tbody.innerHTML = '';
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">Nenhum usuário encontrado.</td></tr>`;
+    return;
+  }
+
+  for (const user of filtered) {
+    const tier   = user.tier   || 'BRONZE';
+    const status = user.status || 'ACTIVE';
+
+    const tierLabels = { BRONZE: 'Bronze (10)', SILVER: 'Prata (50)', GOLD: 'Ouro (∞)' };
+    const updatedAt  = user.updatedAt?.toDate
+      ? user.updatedAt.toDate().toLocaleString('pt-BR')
+      : '—';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <div class="user-name">${escHtml(user.displayName || '—')}</div>
+      </td>
+      <td><span class="user-email">${escHtml(user.email || '—')}</span></td>
+      <td>
+        <select class="tier-select" data-uid="${user.id}" data-field="tier">
+          <option value="BRONZE" ${tier === 'BRONZE' ? 'selected' : ''}>🥉 Bronze (10)</option>
+          <option value="SILVER" ${tier === 'SILVER' ? 'selected' : ''}>🥈 Prata (50)</option>
+          <option value="GOLD"   ${tier === 'GOLD'   ? 'selected' : ''}>🥇 Ouro (∞)</option>
+        </select>
+      </td>
+      <td>
+        <span class="status-badge status-${status}">${status === 'ACTIVE' ? '✓ Ativo' : '✕ Bloqueado'}</span>
+      </td>
+      <td style="font-size:.8rem;color:var(--text-muted)">${updatedAt}</td>
+      <td>
+        <button
+          class="btn-block ${status === 'ACTIVE' ? 'block' : 'unblock'}"
+          data-uid="${user.id}"
+          data-status="${status}"
+        >${status === 'ACTIVE' ? 'Bloquear' : 'Desbloquear'}</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  // Tier change
+  tbody.querySelectorAll('.tier-select').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const uid  = sel.dataset.uid;
+      const tier = sel.value;
+      sel.disabled = true;
+      try {
+        await updateDoc(doc(db, 'users', uid), { tier, updatedAt: serverTimestamp() });
+        showToast(`Perfil atualizado para ${tierLabels[tier]}.`);
+      } catch (e) {
+        showToast('Erro ao atualizar perfil: ' + e.message, 'err');
+      } finally {
+        sel.disabled = false;
+      }
+    });
+  });
+
+  // Block/Unblock
+  tbody.querySelectorAll('.btn-block').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const uid       = btn.dataset.uid;
+      const curStatus = btn.dataset.status;
+      const newStatus = curStatus === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE';
+      btn.disabled = true;
+      try {
+        await updateDoc(doc(db, 'users', uid), { status: newStatus, updatedAt: serverTimestamp() });
+        showToast(newStatus === 'BLOCKED' ? 'Usuário bloqueado.' : 'Usuário desbloqueado.');
+      } catch (e) {
+        showToast('Erro ao alterar status: ' + e.message, 'err');
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+/* ── Helpers ────────────────────────────────────────────── */
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function firebaseErrorMessage(code) {
+  const map = {
+    'auth/invalid-email':          'E-mail inválido.',
+    'auth/user-not-found':         'Usuário não encontrado.',
+    'auth/wrong-password':         'Senha incorreta.',
+    'auth/invalid-credential':     'Credenciais inválidas.',
+    'auth/too-many-requests':      'Muitas tentativas. Tente novamente mais tarde.',
+    'auth/network-request-failed': 'Falha de conexão. Verifique a internet.',
+  };
+  return map[code] || `Erro: ${code}`;
+}
+</script>
+</body>
+</html>
