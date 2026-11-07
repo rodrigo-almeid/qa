@@ -46,6 +46,7 @@ app/
 │   ├── loanform/       # Cadastro e edição de empréstimo
 │   ├── loandetail/     # Detalhes + dar baixa
 │   ├── login/          # Login Google + compliance LGPD
+│   ├── profile/        # Tela de perfil / conta
 │   ├── navigation/     # AppNavigation (NavHost)
 │   └── theme/          # Color, Typography, Theme
 ├── util/               # DateUtils, CurrencyUtils, SecurityPrefs,
@@ -163,7 +164,39 @@ Permite rastrear a evolução da dívida quando há múltiplos pagamentos parcia
 - Pagamento Parcial (campo de valor).
 - Reabrir empréstimo (reverter baixa).
 - Excluir empréstimo (confirmação).
-- Navegar para edição.
+- Navegar para edição — **botão oculto quando status = PAID**.
+- Aviso informativo exibido quando status = PAID: "Reabra o empréstimo para editar."
+
+---
+
+### 5. Perfil / Conta
+
+**Acesso:** ícone `AccountCircle` no canto superior direito do TopAppBar do Dashboard.
+
+**Informações:**
+- Avatar: foto do perfil Google ou iniciais do nome.
+- Nome: campo editável (atualizado via `FirebaseAuth.updateProfile`).
+- E-mail: somente leitura (da conta Google autenticada).
+- Biometria: Switch para ativar/desativar autenticação biométrica.
+- Data de aceite LGPD: exibição informativa.
+
+**Ações:**
+- Botão "Salvar Alterações" — atualiza o Firebase Auth profile com feedback via Snackbar.
+- Botão "Sair da Conta" — desconecta do Firebase Auth e redireciona para Login.
+
+**Componentes:**
+- `ProfileScreen.kt`, `ProfileViewModel.kt`
+- `UpdateUserProfileUseCase.kt`
+
+---
+
+## Regra de Negócio — Bloqueio de Edição para Status PAID
+
+| Ponto | Comportamento |
+|---|---|
+| `LoanDetailScreen` | Botão Editar oculto; aviso informativo exibido |
+| `LoanFormScreen` | Formulário em modo somente leitura; botão Salvar oculto |
+| `SaveLoanUseCase` | Bloqueia save via `IllegalStateException` se registro no Firestore for PAID |
 
 ---
 

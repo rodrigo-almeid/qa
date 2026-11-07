@@ -15,6 +15,7 @@ import com.loantrack.app.ui.loandetail.LoanDetailScreen
 import com.loantrack.app.ui.loanform.LoanFormScreen
 import com.loantrack.app.ui.login.LoginScreen
 import com.loantrack.app.ui.login.LoginViewModel
+import com.loantrack.app.ui.profile.ProfileScreen
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -26,6 +27,7 @@ sealed class Screen(val route: String) {
     object EditLoan : Screen("edit_loan/{loanId}") {
         fun createRoute(loanId: String) = "edit_loan/$loanId"
     }
+    object Profile : Screen("profile")
 }
 
 @Composable
@@ -66,8 +68,20 @@ fun AppNavigation() {
                 onNavigateToLoanDetail = { loanId ->
                     navController.navigate(Screen.LoanDetail.createRoute(loanId))
                 },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onSignOut = {
                     loginViewModel.signOut()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onSignOut = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }

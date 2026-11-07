@@ -96,6 +96,9 @@ dependencies {
     // Encrypted SharedPreferences
     implementation(libs.security.crypto)
 
+    // Image loading (profile avatar)
+    implementation(libs.coil.compose)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

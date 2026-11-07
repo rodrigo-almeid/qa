@@ -31,8 +31,8 @@ data class LoanFormUiState(
     val amountToReceive: String = "",
     val notes: String = "",
     val isEditMode: Boolean = false,
+    val isReadOnly: Boolean = false,
     val showAmountAlert: Boolean = false,
-    val showPaidEditConfirm: Boolean = false,
     val error: String? = null,
     val nameError: String? = null,
     val amountError: String? = null,
@@ -61,6 +61,7 @@ class LoanFormViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     isEditMode = true,
+                    isReadOnly = loan.status == LoanStatus.PAID.name,
                     debtorName = loan.debtorName,
                     contact = loan.contact.filter { it.isDigit() },
                     loanDate = loan.loanDate.toDate(),
@@ -144,14 +145,8 @@ class LoanFormViewModel @Inject constructor(
 
         if (hasError) return
 
-        val existingLoanNow = existingLoan
-        if (existingLoanNow?.status == LoanStatus.PAID.name && !state.showPaidEditConfirm) {
-            updateState { copy(showPaidEditConfirm = true) }
-            return
-        }
-
         viewModelScope.launch {
-            updateState { copy(isLoading = true, showPaidEditConfirm = false) }
+            updateState { copy(isLoading = true) }
             val amountLent = (state.amountLent.toLongOrNull() ?: 0L) / 100.0
             val amountToReceive = amountToReceiveLong / 100.0
             val now = Timestamp.now()
@@ -185,13 +180,6 @@ class LoanFormViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    fun dismissPaidEditConfirm() = updateState { copy(showPaidEditConfirm = false) }
-
-    fun confirmPaidEdit() {
-        updateState { copy(showPaidEditConfirm = false) }
-        saveLoan()
     }
 
     private fun updateState(update: LoanFormUiState.() -> LoanFormUiState) {

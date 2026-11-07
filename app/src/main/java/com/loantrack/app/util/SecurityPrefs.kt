@@ -64,6 +64,9 @@ object SecurityPrefs {
     fun getFailedAttempts(ctx: Context): Int =
         prefs(ctx).getInt(KEY_FAILED_ATTEMPTS, 0)
 
+    fun getTermsAcceptedAt(ctx: Context): Long =
+        prefs(ctx).getLong(KEY_TERMS_ACCEPTED_AT, 0L)
+
     private fun prefs(ctx: Context) = EncryptedSharedPreferences.create(
         ctx,
         PREFS,

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Logout
@@ -26,6 +27,7 @@ import com.loantrack.app.ui.dashboard.components.SummaryCards
 fun DashboardScreen(
     onNavigateToAddLoan: () -> Unit,
     onNavigateToLoanDetail: (String) -> Unit,
+    onNavigateToProfile: () -> Unit,
     onSignOut: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
@@ -61,6 +63,9 @@ fun DashboardScreen(
                 actions = {
                     IconButton(onClick = { searchActive = !searchActive }) {
                         Icon(Icons.Default.Search, contentDescription = null)
+                    }
+                    IconButton(onClick = onNavigateToProfile) {
+                        Icon(Icons.Default.AccountCircle, contentDescription = "Perfil")
                     }
                     Box {
                         IconButton(onClick = { showSortMenu = true }) {

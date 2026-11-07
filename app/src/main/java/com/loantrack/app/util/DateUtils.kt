@@ -68,4 +68,6 @@ object DateUtils {
     }.time
 
     fun toTimestamp(date: Date): Timestamp = Timestamp(date)
+
+    fun formatEpochMillis(millis: Long): String = displayFormat.format(Date(millis))
 }

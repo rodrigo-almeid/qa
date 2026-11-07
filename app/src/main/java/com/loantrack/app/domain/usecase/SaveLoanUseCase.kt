@@ -11,6 +11,14 @@ class SaveLoanUseCase @Inject constructor(
     private val repository: LoanRepository
 ) {
     suspend operator fun invoke(userId: String, loan: Loan): Result<Unit> {
+        if (loan.id.isNotBlank()) {
+            val existing = repository.getLoanById(userId, loan.id)
+            if (existing?.status == LoanStatus.PAID.name) {
+                return Result.failure(
+                    IllegalStateException("Não é permitido editar empréstimos com status PAGO.")
+                )
+            }
+        }
         val now = Timestamp.now()
         val status = loan.computeStatus()
         val loanToSave = loan.copy(

@@ -16,9 +16,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -75,24 +77,6 @@ fun LoanFormScreen(
             snackbarHostState.showSnackbar(it)
             viewModel.clearError()
         }
-    }
-
-    if (uiState.showPaidEditConfirm) {
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissPaidEditConfirm() },
-            title = { Text("Empréstimo Pago") },
-            text = { Text(stringResource(R.string.edit_paid_loan_confirmation)) },
-            confirmButton = {
-                TextButton(onClick = { viewModel.confirmPaidEdit() }) {
-                    Text(stringResource(R.string.confirm))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.dismissPaidEditConfirm() }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
     }
 
     fun showDatePicker(initialDate: Date, onDateSelected: (Date) -> Unit) {
@@ -155,11 +139,40 @@ fun LoanFormScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                if (uiState.isReadOnly) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Text(
+                                text = "Empréstimos com status PAGO não podem ser editados. Reabra o empréstimo para editar.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
+                }
+
                 OutlinedTextField(
                     value = uiState.debtorName,
-                    onValueChange = { viewModel.updateDebtorName(it) },
+                    onValueChange = { if (!uiState.isReadOnly) viewModel.updateDebtorName(it) },
                     label = { Text(stringResource(R.string.debtor_name)) },
                     modifier = Modifier.fillMaxWidth(),
+                    readOnly = uiState.isReadOnly,
                     isError = uiState.nameError != null,
                     supportingText = uiState.nameError?.let { { Text(it) } },
                     singleLine = true
@@ -167,9 +180,10 @@ fun LoanFormScreen(
 
                 OutlinedTextField(
                     value = uiState.contact,
-                    onValueChange = { viewModel.updateContact(it) },
+                    onValueChange = { if (!uiState.isReadOnly) viewModel.updateContact(it) },
                     label = { Text(stringResource(R.string.contact)) },
                     modifier = Modifier.fillMaxWidth(),
+                    readOnly = uiState.isReadOnly,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     visualTransformation = remember { BrazilianPhoneTransformation() },
                     singleLine = true
@@ -182,10 +196,12 @@ fun LoanFormScreen(
                     modifier = Modifier.fillMaxWidth(),
                     readOnly = true,
                     trailingIcon = {
-                        IconButton(onClick = {
-                            showDatePicker(uiState.loanDate) { viewModel.updateLoanDate(it) }
-                        }) {
-                            Icon(Icons.Default.CalendarMonth, contentDescription = null)
+                        if (!uiState.isReadOnly) {
+                            IconButton(onClick = {
+                                showDatePicker(uiState.loanDate) { viewModel.updateLoanDate(it) }
+                            }) {
+                                Icon(Icons.Default.CalendarMonth, contentDescription = null)
+                            }
                         }
                     }
                 )
@@ -199,19 +215,22 @@ fun LoanFormScreen(
                     isError = uiState.dueDateError != null,
                     supportingText = uiState.dueDateError?.let { { Text(it) } },
                     trailingIcon = {
-                        IconButton(onClick = {
-                            showDatePicker(uiState.dueDate) { viewModel.updateDueDate(it) }
-                        }) {
-                            Icon(Icons.Default.CalendarMonth, contentDescription = null)
+                        if (!uiState.isReadOnly) {
+                            IconButton(onClick = {
+                                showDatePicker(uiState.dueDate) { viewModel.updateDueDate(it) }
+                            }) {
+                                Icon(Icons.Default.CalendarMonth, contentDescription = null)
+                            }
                         }
                     }
                 )
 
                 OutlinedTextField(
                     value = uiState.amountLent,
-                    onValueChange = { viewModel.updateAmountLent(it) },
+                    onValueChange = { if (!uiState.isReadOnly) viewModel.updateAmountLent(it) },
                     label = { Text(stringResource(R.string.amount_lent)) },
                     modifier = Modifier.fillMaxWidth(),
+                    readOnly = uiState.isReadOnly,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     visualTransformation = remember { CurrencyVisualTransformation() },
                     singleLine = true
@@ -219,9 +238,10 @@ fun LoanFormScreen(
 
                 OutlinedTextField(
                     value = uiState.amountToReceive,
-                    onValueChange = { viewModel.updateAmountToReceive(it) },
+                    onValueChange = { if (!uiState.isReadOnly) viewModel.updateAmountToReceive(it) },
                     label = { Text(stringResource(R.string.amount_to_receive)) },
                     modifier = Modifier.fillMaxWidth(),
+                    readOnly = uiState.isReadOnly,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     visualTransformation = remember { CurrencyVisualTransformation() },
                     isError = uiState.amountError != null,
@@ -250,20 +270,22 @@ fun LoanFormScreen(
 
                 OutlinedTextField(
                     value = uiState.notes,
-                    onValueChange = { viewModel.updateNotes(it) },
+                    onValueChange = { if (!uiState.isReadOnly) viewModel.updateNotes(it) },
                     label = { Text(stringResource(R.string.notes)) },
                     modifier = Modifier.fillMaxWidth(),
+                    readOnly = uiState.isReadOnly,
                     minLines = 3,
                     maxLines = 5
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Button(
-                    onClick = { viewModel.saveLoan() },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.save))
+                if (!uiState.isReadOnly) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { viewModel.saveLoan() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.save))
+                    }
                 }
             }
         }

@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -88,8 +89,10 @@ fun LoanDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { uiState.loan?.let { onNavigateToEdit(it.id) } }) {
-                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
+                    if (uiState.loan?.status != LoanStatus.PAID.name) {
+                        IconButton(onClick = { uiState.loan?.let { onNavigateToEdit(it.id) } }) {
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
+                        }
                     }
                     IconButton(onClick = viewModel::showDeleteDialog) {
                         Icon(
@@ -188,6 +191,33 @@ fun LoanDetailScreen(
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
                         Text(text = loan.notes, style = MaterialTheme.typography.bodyMedium)
+                    }
+
+                    if (loan.status == LoanStatus.PAID.name) {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Text(
+                                    text = "Empréstimos com status PAGO não podem ser editados. Reabra o empréstimo para editar.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
+                        }
                     }
 
                     HorizontalDivider()
