@@ -103,6 +103,9 @@ dependencies {
     // Apache POI for XLS export
     implementation(libs.apache.poi)
 
+    // Biometric authentication
+    implementation(libs.biometric)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
