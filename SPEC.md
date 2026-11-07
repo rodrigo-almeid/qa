@@ -65,18 +65,34 @@ app/
 | `userId` | String | UID do usuário Firebase |
 | `debtorName` | String | Nome do devedor |
 | `contact` | String | Telefone formatado `(XX) XXXXX-XXXX` |
-| `loanDate` | Timestamp | Data do empréstimo |
-| `dueDate` | Timestamp | Data de vencimento (padrão: loanDate + 1 mês) |
-| `originalDueDate` | Timestamp | Vencimento original (antes de edições) |
-| `paymentDate` | Timestamp? | Data do pagamento (null se não pago) |
-| `amountLent` | Double | Valor emprestado em R$ |
-| `amountToReceive` | Double | Valor a receber em R$ |
-| `amountPaid` | Double | Valor já pago em R$ |
+| `loanDate` | String | Data do empréstimo — formato `YYYY-MM-DD` (UTC) |
+| `dueDate` | String | Data de vencimento — formato `YYYY-MM-DD` (UTC); padrão: loanDate + 1 mês |
+| `originalDueDate` | String | Vencimento original antes de edições — `YYYY-MM-DD` |
+| `paymentDate` | String? | Data do pagamento — `YYYY-MM-DD` ou null |
+| `amountLent` | Long | Valor emprestado em centavos (ex.: R$ 10,50 → `1050`) |
+| `amountToReceive` | Long | Valor a receber em centavos |
+| `amountPaid` | Long | Valor já pago em centavos |
 | `paymentType` | String | Sempre `SINGLE` |
 | `status` | String | `PENDING`, `PAID`, `OVERDUE`, `PARTIAL` |
 | `notes` | String? | Observações livres |
 | `createdAt` | Timestamp | Data de criação |
 | `updatedAt` | Timestamp | Última atualização |
+
+> **Datas como string `YYYY-MM-DD`:** evita deslocamento de dia por fuso horário em dispositivos com timezone diferente do servidor.
+> **Valores em centavos (`Long`):** elimina erros de arredondamento de ponto flutuante em somatórios — converter para `BigDecimal` apenas na camada de UI/formatação.
+
+### Subcoleção `payments` (histórico de pagamentos parciais)
+
+Cada documento `Loan` possui uma subcoleção `payments` no Firestore:
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | String | ID do documento |
+| `amount` | Long | Valor pago em centavos |
+| `date` | String | Data do pagamento — `YYYY-MM-DD` |
+| `notes` | String? | Observação livre |
+
+Permite rastrear a evolução da dívida quando há múltiplos pagamentos parciais em datas distintas.
 
 ---
 
@@ -161,6 +177,15 @@ app/
 
 ---
 
+## Testabilidade
+
+- `BiometricHelper`, `SecurityPrefs` e `DateUtils` expostos como **interfaces** injetadas via Hilt, permitindo Mocks em testes unitários e de UI.
+- **Testes Unitários** de UseCases: validação de cálculo de baixa parcial, transição de status, somatórios em centavos.
+- **Testes de UI** com `ComposeTestRule`: fluxos de cadastro, dar baixa, pagamento parcial.
+- **Testes de transformação**: `CurrencyVisualTransformation` e `BrazilianPhoneTransformation` verificados com entradas de borda (vazio, máximo de dígitos, formatação).
+
+---
+
 ## Segurança e Compliance
 
 ### Autenticação
@@ -171,11 +196,12 @@ app/
 ### Rate Limiting (client-side)
 - Máximo de 5 tentativas de autenticação falhas.
 - Bloqueio temporário de 15 minutos após o limite.
-- Implementado em `SecurityPrefs` via SharedPreferences.
+- Implementado em `SecurityPrefs` via **`EncryptedSharedPreferences`** (`androidx.security:security-crypto`) — impede leitura dos contadores em dispositivos com root ou via backup ADB.
 
 ### Armazenamento
 - Dados de empréstimos: Firebase Firestore (criptografado em trânsito via TLS e em repouso).
-- Configurações do app: SharedPreferences local.
+- Dados locais sensíveis (rate-limiting, aceite LGPD): **`EncryptedSharedPreferences`** com chave gerenciada pelo Android Keystore.
+- Firestore offline persistence habilitada (`persistentCacheSettings`) — o app funciona sem conexão e sincroniza ao reconectar.
 
 ### LGPD (Lei 13.709/2018)
 - Aceite explícito de Termos de Uso e Política de Privacidade no primeiro acesso.
