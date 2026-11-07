@@ -3,12 +3,16 @@ package com.loantrack.app.ui.dashboard
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.WorkspacePremium
+import androidx.compose.ui.graphics.Color
+import com.loantrack.app.data.model.UserTier
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -79,6 +83,47 @@ fun DashboardScreen(
                             expanded = showSortMenu,
                             onDismissRequest = { showSortMenu = false }
                         ) {
+                            val (tierLabel, tierColor, tierOnColor) = when (uiState.userTier) {
+                                UserTier.BRONZE -> Triple("Bronze", Color(0xFFCD7F32), Color.White)
+                                UserTier.SILVER -> Triple("Prata",  Color(0xFF9E9E9E), Color.White)
+                                UserTier.GOLD   -> Triple("Ouro",   Color(0xFFFFC107), Color(0xFF4E3600))
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Meu perfil",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                                Surface(
+                                    shape = RoundedCornerShape(50),
+                                    color = tierColor
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Default.WorkspacePremium,
+                                            contentDescription = null,
+                                            tint = tierOnColor,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Text(
+                                            text = tierLabel,
+                                            color = tierOnColor,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
+                                }
+                            }
+                            HorizontalDivider()
                             Text(
                                 text = stringResource(R.string.sort_options),
                                 style = MaterialTheme.typography.labelSmall,

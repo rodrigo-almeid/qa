@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.loantrack.app.data.model.UserTier
+import com.loantrack.app.data.repository.UserRepository
 import com.loantrack.app.domain.usecase.UpdateUserProfileUseCase
 import com.loantrack.app.util.DateUtils
 import com.loantrack.app.util.SecurityPrefs
@@ -20,6 +22,7 @@ data class ProfileUiState(
     val photoUrl: String? = null,
     val isBiometricEnabled: Boolean = false,
     val lgpdAcceptedAt: String = "",
+    val userTier: UserTier = UserTier.BRONZE,
     val isSaving: Boolean = false,
     val savedSuccess: Boolean = false,
     val error: String? = null
@@ -29,6 +32,7 @@ data class ProfileUiState(
 class ProfileViewModel @Inject constructor(
     private val app: Application,
     private val auth: FirebaseAuth,
+    private val userRepository: UserRepository,
     private val updateUserProfileUseCase: UpdateUserProfileUseCase
 ) : AndroidViewModel(app) {
 
@@ -45,6 +49,10 @@ class ProfileViewModel @Inject constructor(
             isBiometricEnabled = SecurityPrefs.isBiometricEnabled(app),
             lgpdAcceptedAt = if (acceptedAtMs > 0L) DateUtils.formatEpochMillis(acceptedAtMs) else ""
         )
+        viewModelScope.launch {
+            val appUser = userRepository.getCurrentUser()
+            _uiState.value = _uiState.value.copy(userTier = appUser.userTier)
+        }
     }
 
     fun updateDisplayName(name: String) {
