@@ -128,23 +128,18 @@ Os dados são armazenados:
 • No Firebase Firestore (serviço do Google), com criptografia em trânsito (TLS) e em repouso.
 • Localmente no dispositivo (SharedPreferences), apenas para configurações do aplicativo.
 
-6. COMPARTILHAMENTO
-Os dados NÃO são compartilhados com terceiros, exceto:
-• Google Firebase (infraestrutura de banco de dados e autenticação).
-• Destinatário de relatórios por e-mail, escolhido pelo próprio usuário.
-
-7. DIREITOS DO TITULAR
+6. DIREITOS DO TITULAR
 Conforme a LGPD, você tem direito a:
 • Acessar, corrigir e excluir seus dados.
 • Revogar o consentimento a qualquer momento.
 Para exercer seus direitos: almeidainteligencia@gmail.com
 
-8. RETENÇÃO E EXCLUSÃO
+7. RETENÇÃO E EXCLUSÃO
 Os dados são mantidos enquanto o usuário possuir conta ativa. Para exclusão completa, entre em contato via e-mail.
 
-9. SEGURANÇA
+8. SEGURANÇA
 Adotamos medidas técnicas como: autenticação Google OAuth 2.0, criptografia HTTPS/TLS, controle de acesso por Firebase Rules e autenticação biométrica opcional.
 
-10. CONTATO DO DPO (Encarregado de Dados)
+9. CONTATO DO DPO (Encarregado de Dados)
 almeidainteligencia@gmail.com
 """.trimIndent()
