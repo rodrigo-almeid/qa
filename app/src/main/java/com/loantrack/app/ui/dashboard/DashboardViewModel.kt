@@ -72,9 +72,11 @@ class DashboardViewModel @Inject constructor(
     }
 
     private fun loadUserTier() {
+        val userId = currentUserId ?: return
         viewModelScope.launch {
-            val user = userRepository.getCurrentUser()
-            _uiState.value = _uiState.value.copy(userTier = user.userTier)
+            userRepository.getUserFlow(userId).collect { user ->
+                _uiState.value = _uiState.value.copy(userTier = user.userTier)
+            }
         }
     }
 

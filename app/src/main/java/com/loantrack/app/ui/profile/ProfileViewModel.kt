@@ -49,9 +49,13 @@ class ProfileViewModel @Inject constructor(
             isBiometricEnabled = SecurityPrefs.isBiometricEnabled(app),
             lgpdAcceptedAt = if (acceptedAtMs > 0L) DateUtils.formatEpochMillis(acceptedAtMs) else ""
         )
-        viewModelScope.launch {
-            val appUser = userRepository.getCurrentUser()
-            _uiState.value = _uiState.value.copy(userTier = appUser.userTier)
+        val uid = auth.currentUser?.uid
+        if (uid != null) {
+            viewModelScope.launch {
+                userRepository.getUserFlow(uid).collect { appUser ->
+                    _uiState.value = _uiState.value.copy(userTier = appUser.userTier)
+                }
+            }
         }
     }
 

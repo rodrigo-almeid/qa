@@ -4,6 +4,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.loantrack.app.data.model.User
 import com.loantrack.app.data.model.UserTier
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,6 +31,17 @@ class UserRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             User(id = uid)
         }
+    }
+
+    override fun getUserFlow(userId: String): Flow<User> = callbackFlow {
+        val listener = usersCollection().document(userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) { close(error); return@addSnapshotListener }
+                val user = snapshot?.toObject(User::class.java)?.copy(id = userId)
+                    ?: User(id = userId)
+                trySend(user)
+            }
+        awaitClose { listener.remove() }
     }
 
     private suspend fun createDefaultUser(uid: String): User {
