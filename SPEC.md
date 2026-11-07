@@ -37,10 +37,12 @@
 ```
 app/
 ├── data/
-│   ├── model/          # Loan, LoanStatus, PaymentType
-│   └── repository/     # LoanRepository (interface) + LoanRepositoryImpl (Firestore)
+│   ├── model/          # Loan, LoanStatus, PaymentType, User, UserTier
+│   └── repository/     # LoanRepository + LoanRepositoryImpl (Firestore)
+│                       # UserRepository + UserRepositoryImpl (Firestore)
 ├── domain/
-│   └── usecase/        # GetLoans, SaveLoan, DeleteLoan, MarkPaid, PartialPayment, UpdateOverdueStatus
+│   └── usecase/        # GetLoans, SaveLoan, DeleteLoan, MarkPaid, PartialPayment,
+│                       # UpdateOverdueStatus, ReopenLoan, UpdateUserProfile
 ├── ui/
 │   ├── dashboard/      # Lista de empréstimos + resumo financeiro
 │   ├── loanform/       # Cadastro e edição de empréstimo
@@ -53,7 +55,7 @@ app/
 │                       # BiometricHelper, BrazilianPhoneTransformation,
 │                       # CurrencyVisualTransformation
 ├── worker/             # LoanStatusWorker
-└── di/                 # AppModule, FirebaseModule, WorkManagerModule
+└── di/                 # AppModule, FirebaseModule, WorkManagerModule, UserRepositoryModule
 ```
 
 ---
@@ -197,6 +199,47 @@ Permite rastrear a evolução da dívida quando há múltiplos pagamentos parcia
 | `LoanDetailScreen` | Botão Editar oculto; aviso informativo exibido |
 | `LoanFormScreen` | Formulário em modo somente leitura; botão Salvar oculto |
 | `SaveLoanUseCase` | Bloqueia save via `IllegalStateException` se registro no Firestore for PAID |
+
+---
+
+## Regra de Negócio — Perfis de Acesso (UserTier)
+
+Cada usuário possui um perfil armazenado no Firestore em `users/{uid}`.
+
+| Perfil | Empréstimos ativos (máx.) | Editar cadastro | Reabrir (PAID → PENDING) |
+|---|---|---|---|
+| **Bronze** (padrão) | 10 | Bloqueado | Bloqueado |
+| **Silver** | 50 | Permitido | Permitido |
+| **Gold** | Ilimitado | Permitido | Permitido |
+
+**Todos os perfis podem:** dar baixa total, pagamento parcial, excluir.
+
+### Comportamento por tela
+
+| Tela | Bronze | Silver / Gold |
+|---|---|---|
+| `LoanDetailScreen` | Botão Editar oculto; Reabrir oculto para PAGO | Comportamento padrão |
+| `LoanFormScreen` (edição) | Formulário somente leitura com aviso de perfil Bronze | Comportamento padrão |
+| `DashboardScreen` | FAB acinzentado ao atingir 10 ativos; Snackbar explicativo ao tentar adicionar | FAB acinzentado ao atingir limite; Snackbar ao tentar adicionar |
+| `SaveLoanUseCase` | Rejeita edição via `IllegalStateException`; Rejeita criação acima do limite | Rejeita criação acima do limite |
+| `ReopenLoanUseCase` | Rejeita via `IllegalStateException` | Verifica limite antes de reabrir |
+
+### Downgrade de perfil
+
+Ao reduzir o perfil (ex.: Gold → Bronze), os dados são preservados. Novas criações são bloqueadas se o usuário já possuir mais de 10 empréstimos ativos; os existentes permanecem inalterados.
+
+### Modelo de dados `User`
+
+Coleção Firestore: `users/{uid}`
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | String | UID Firebase |
+| `email` | String | E-mail da conta Google |
+| `displayName` | String | Nome de exibição |
+| `tier` | String | `BRONZE`, `SILVER` ou `GOLD` — padrão `BRONZE` |
+
+O documento é criado automaticamente no primeiro acesso via `UserRepositoryImpl` ("get or create").
 
 ---
 

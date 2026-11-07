@@ -19,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.loantrack.app.R
 import com.loantrack.app.data.model.LoanStatus
+import com.loantrack.app.data.model.UserTier
 import com.loantrack.app.data.model.remainingBalance
 import com.loantrack.app.ui.dashboard.components.StatusBadge
 import com.loantrack.app.util.CurrencyUtils
@@ -89,7 +90,7 @@ fun LoanDetailScreen(
                     }
                 },
                 actions = {
-                    if (uiState.loan?.status != LoanStatus.PAID.name) {
+                    if (uiState.loan?.status != LoanStatus.PAID.name && uiState.userTier != UserTier.BRONZE) {
                         IconButton(onClick = { uiState.loan?.let { onNavigateToEdit(it.id) } }) {
                             Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
                         }
@@ -194,6 +195,10 @@ fun LoanDetailScreen(
                     }
 
                     if (loan.status == LoanStatus.PAID.name) {
+                        val infoText = if (uiState.userTier == UserTier.BRONZE)
+                            "Perfil Bronze: empréstimos PAGOS não podem ser reabertos ou editados."
+                        else
+                            "Empréstimos com status PAGO não podem ser editados. Reabra o empréstimo para editar."
                         Card(
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer
@@ -212,7 +217,7 @@ fun LoanDetailScreen(
                                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                                 Text(
-                                    text = "Empréstimos com status PAGO não podem ser editados. Reabra o empréstimo para editar.",
+                                    text = infoText,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
@@ -227,7 +232,7 @@ fun LoanDetailScreen(
                             onClick = viewModel::markAsPaid,
                             modifier = Modifier.fillMaxWidth()
                         ) { Text(stringResource(R.string.dar_baixa_total)) }
-                    } else {
+                    } else if (uiState.userTier != UserTier.BRONZE) {
                         OutlinedButton(
                             onClick = viewModel::showReopenDialog,
                             modifier = Modifier.fillMaxWidth()

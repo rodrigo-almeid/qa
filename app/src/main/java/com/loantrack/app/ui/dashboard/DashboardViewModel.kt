@@ -10,7 +10,9 @@ import androidx.work.WorkManager
 import com.google.firebase.auth.FirebaseAuth
 import com.loantrack.app.data.model.Loan
 import com.loantrack.app.data.model.LoanStatus
+import com.loantrack.app.data.model.UserTier
 import com.loantrack.app.data.model.remainingBalance
+import com.loantrack.app.data.repository.UserRepository
 import com.loantrack.app.domain.usecase.GetLoansUseCase
 import com.loantrack.app.domain.usecase.MarkPaidUseCase
 import com.loantrack.app.util.DateUtils
@@ -42,13 +44,18 @@ data class DashboardUiState(
     val searchQuery: String = "",
     val sortOrder: SortOrder = SortOrder.BY_DUE_DATE,
     val selectedPeriodDate: java.util.Date? = null,
-    val error: String? = null
-)
+    val error: String? = null,
+    val userTier: UserTier = UserTier.BRONZE,
+    val activeLoansCount: Int = 0
+) {
+    val isAtLoanLimit: Boolean get() = activeLoansCount >= userTier.maxActiveLoans
+}
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val getLoansUseCase: GetLoansUseCase,
     private val markPaidUseCase: MarkPaidUseCase,
+    private val userRepository: UserRepository,
     private val firebaseAuth: FirebaseAuth,
     private val workManager: WorkManager
 ) : ViewModel() {
@@ -60,7 +67,15 @@ class DashboardViewModel @Inject constructor(
 
     init {
         loadLoans()
+        loadUserTier()
         scheduleWorker()
+    }
+
+    private fun loadUserTier() {
+        viewModelScope.launch {
+            val user = userRepository.getCurrentUser()
+            _uiState.value = _uiState.value.copy(userTier = user.userTier)
+        }
     }
 
     private fun loadLoans() {
@@ -94,12 +109,14 @@ class DashboardViewModel @Inject constructor(
                         currentState.selectedPeriodDate
                     )
 
+                    val activeCount = loans.count { it.status != LoanStatus.PAID.name }
                     _uiState.value = currentState.copy(
                         isLoading = false,
                         loans = loans,
                         filteredLoans = filtered,
                         totalOutstanding = outstanding,
-                        receivedThisMonth = receivedThisMonth
+                        receivedThisMonth = receivedThisMonth,
+                        activeLoansCount = activeCount
                     )
                 }
         }

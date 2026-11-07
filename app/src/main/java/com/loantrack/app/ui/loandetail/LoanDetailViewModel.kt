@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.loantrack.app.data.model.Loan
-import com.loantrack.app.data.model.LoanStatus
+import com.loantrack.app.data.model.UserTier
 import com.loantrack.app.data.repository.LoanRepository
+import com.loantrack.app.data.repository.UserRepository
 import com.loantrack.app.domain.usecase.DeleteLoanUseCase
 import com.loantrack.app.domain.usecase.MarkPaidUseCase
+import com.loantrack.app.domain.usecase.ReopenLoanUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,14 +23,17 @@ data class LoanDetailUiState(
     val isDeleted: Boolean = false,
     val error: String? = null,
     val showDeleteDialog: Boolean = false,
-    val showReopenDialog: Boolean = false
+    val showReopenDialog: Boolean = false,
+    val userTier: UserTier = UserTier.BRONZE
 )
 
 @HiltViewModel
 class LoanDetailViewModel @Inject constructor(
     private val repository: LoanRepository,
+    private val userRepository: UserRepository,
     private val markPaidUseCase: MarkPaidUseCase,
     private val deleteLoanUseCase: DeleteLoanUseCase,
+    private val reopenLoanUseCase: ReopenLoanUseCase,
     private val auth: FirebaseAuth
 ) : ViewModel() {
 
@@ -40,7 +45,12 @@ class LoanDetailViewModel @Inject constructor(
     fun loadLoan(loanId: String) {
         viewModelScope.launch {
             val loan = repository.getLoanById(userId, loanId)
-            _uiState.value = _uiState.value.copy(loan = loan, isLoading = false)
+            val user = userRepository.getCurrentUser()
+            _uiState.value = _uiState.value.copy(
+                loan = loan,
+                isLoading = false,
+                userTier = user.userTier
+            )
         }
     }
 
@@ -81,14 +91,15 @@ class LoanDetailViewModel @Inject constructor(
     fun reopenLoan() {
         val loan = _uiState.value.loan ?: return
         viewModelScope.launch {
-            val reopened = loan.copy(
-                status = LoanStatus.PENDING.name,
-                amountPaid = 0.0,
-                paymentDate = null
-            )
-            val result = repository.updateLoan(userId, reopened)
+            val result = reopenLoanUseCase(userId, loan.id)
             if (result.isSuccess) {
-                _uiState.value = _uiState.value.copy(loan = reopened, showReopenDialog = false)
+                val updated = repository.getLoanById(userId, loan.id)
+                _uiState.value = _uiState.value.copy(loan = updated, showReopenDialog = false)
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    error = result.exceptionOrNull()?.message,
+                    showReopenDialog = false
+                )
             }
         }
     }

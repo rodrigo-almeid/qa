@@ -7,7 +7,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.loantrack.app.data.model.Loan
 import com.loantrack.app.data.model.LoanStatus
 import com.loantrack.app.data.model.PaymentType
+import com.loantrack.app.data.model.UserTier
 import com.loantrack.app.data.repository.LoanRepository
+import com.loantrack.app.data.repository.UserRepository
 import com.loantrack.app.domain.usecase.SaveLoanUseCase
 import com.loantrack.app.util.BrazilianPhoneTransformation
 import com.loantrack.app.util.DateUtils
@@ -32,6 +34,7 @@ data class LoanFormUiState(
     val notes: String = "",
     val isEditMode: Boolean = false,
     val isReadOnly: Boolean = false,
+    val readOnlyMessage: String = "",
     val showAmountAlert: Boolean = false,
     val error: String? = null,
     val nameError: String? = null,
@@ -43,6 +46,7 @@ data class LoanFormUiState(
 class LoanFormViewModel @Inject constructor(
     private val saveLoanUseCase: SaveLoanUseCase,
     private val loanRepository: LoanRepository,
+    private val userRepository: UserRepository,
     private val firebaseAuth: FirebaseAuth
 ) : ViewModel() {
 
@@ -56,12 +60,22 @@ class LoanFormViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             val loan = loanRepository.getLoanById(userId, loanId)
+            val user = userRepository.getCurrentUser()
+            val isBronze = user.userTier == UserTier.BRONZE
             if (loan != null) {
                 existingLoan = loan
+                val isPaid = loan.status == LoanStatus.PAID.name
+                val readOnly = isPaid || isBronze
+                val readOnlyMessage = when {
+                    isPaid -> "Empréstimos com status PAGO não podem ser editados. Reabra o empréstimo para editar."
+                    isBronze -> "Perfil Bronze não permite editar empréstimos cadastrados."
+                    else -> ""
+                }
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     isEditMode = true,
-                    isReadOnly = loan.status == LoanStatus.PAID.name,
+                    isReadOnly = readOnly,
+                    readOnlyMessage = readOnlyMessage,
                     debtorName = loan.debtorName,
                     contact = loan.contact.filter { it.isDigit() },
                     loanDate = loan.loanDate.toDate(),
@@ -152,22 +166,22 @@ class LoanFormViewModel @Inject constructor(
             val now = Timestamp.now()
 
             val loan = Loan(
-                id = existingLoanNow?.id ?: "",
+                id = existingLoan?.id ?: "",
                 userId = userId,
                 debtorName = state.debtorName.trim(),
                 contact = BrazilianPhoneTransformation.format(state.contact.trim()),
                 loanDate = DateUtils.toTimestamp(state.loanDate),
                 dueDate = DateUtils.toTimestamp(state.dueDate),
-                originalDueDate = existingLoanNow?.originalDueDate ?: DateUtils.toTimestamp(state.dueDate),
+                originalDueDate = existingLoan?.originalDueDate ?: DateUtils.toTimestamp(state.dueDate),
                 amountLent = amountLent,
                 amountToReceive = amountToReceive,
-                amountPaid = existingLoanNow?.amountPaid ?: 0.0,
+                amountPaid = existingLoan?.amountPaid ?: 0.0,
                 paymentType = PaymentType.SINGLE.name,
                 installmentsTotal = null,
                 installmentsPaid = null,
-                status = existingLoanNow?.status ?: LoanStatus.PENDING.name,
+                status = existingLoan?.status ?: LoanStatus.PENDING.name,
                 notes = state.notes.trim().ifBlank { null },
-                createdAt = existingLoanNow?.createdAt ?: now,
+                createdAt = existingLoan?.createdAt ?: now,
                 updatedAt = now
             )
 

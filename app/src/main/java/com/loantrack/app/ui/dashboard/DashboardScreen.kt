@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import com.loantrack.app.R
 import com.loantrack.app.ui.dashboard.components.FilterTabs
 import com.loantrack.app.ui.dashboard.components.LoanCard
@@ -35,6 +36,8 @@ fun DashboardScreen(
     var showSortMenu by remember { mutableStateOf(false) }
     var searchActive by remember { mutableStateOf(false) }
     var confirmPayLoan by remember { mutableStateOf<com.loantrack.app.data.model.Loan?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     if (confirmPayLoan != null) {
         val loan = confirmPayLoan!!
@@ -57,6 +60,7 @@ fun DashboardScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.dashboard_title)) },
@@ -117,7 +121,23 @@ fun DashboardScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onNavigateToAddLoan) {
+            FloatingActionButton(
+                onClick = {
+                    if (uiState.isAtLoanLimit) {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                "Limite de ${uiState.userTier.maxActiveLoans} empréstimos ativos atingido para o perfil ${uiState.userTier.name}."
+                            )
+                        }
+                    } else {
+                        onNavigateToAddLoan()
+                    }
+                },
+                containerColor = if (uiState.isAtLoanLimit)
+                    MaterialTheme.colorScheme.surfaceVariant
+                else
+                    FloatingActionButtonDefaults.containerColor
+            ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_loan))
             }
         }

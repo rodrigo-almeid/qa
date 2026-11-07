@@ -11,4 +11,5 @@ interface LoanRepository {
     suspend fun updateLoan(userId: String, loan: Loan): Result<Unit>
     suspend fun getAllLoansOnce(userId: String): Result<List<Loan>>
     suspend fun getLoansOnce(userId: String): List<Loan>
+    suspend fun getActiveLoansCount(userId: String): Int
 }

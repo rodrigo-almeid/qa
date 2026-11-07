@@ -139,7 +139,7 @@ fun LoanFormScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (uiState.isReadOnly) {
+                if (uiState.isReadOnly && uiState.readOnlyMessage.isNotBlank()) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
@@ -159,7 +159,7 @@ fun LoanFormScreen(
                                 tint = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                             Text(
-                                text = "Empréstimos com status PAGO não podem ser editados. Reabra o empréstimo para editar.",
+                                text = uiState.readOnlyMessage,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )

@@ -2,6 +2,7 @@ package com.loantrack.app.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.loantrack.app.data.model.Loan
+import com.loantrack.app.data.model.LoanStatus
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -92,6 +93,18 @@ class LoanRepositoryImpl @Inject constructor(
                 .documents.mapNotNull { it.toObject(Loan::class.java)?.copy(id = it.id) }
         } catch (e: Exception) {
             emptyList()
+        }
+    }
+
+    override suspend fun getActiveLoansCount(userId: String): Int {
+        return try {
+            loansCollection(userId)
+                .whereNotEqualTo("status", LoanStatus.PAID.name)
+                .get()
+                .await()
+                .size()
+        } catch (e: Exception) {
+            0
         }
     }
 }
