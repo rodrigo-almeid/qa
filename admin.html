@@ -38,14 +38,8 @@
       min-height: 100vh;
     }
 
-    /* ── Login ───────────────────────────────────────────── */
-    #login-view {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 24px;
-    }
+    /* ── Login (oculto — acesso direto sem login) ─────────── */
+    #login-view { display: none !important; }
 
     .login-card {
       background: var(--surface);
@@ -107,7 +101,7 @@
     .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
 
     /* ── Admin panel ─────────────────────────────────────── */
-    #admin-view { display: none; }
+    #admin-view { display: block; }
 
     header {
       background: var(--brand);
@@ -473,35 +467,27 @@
     }
     .bar-fill.warn  { background: #f59e0b; }
     .bar-fill.full  { background: var(--danger); }
+
+    /* ── Delete button in modal ─────────────────────────── */
+    .btn-delete-user {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 10px;
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1.5px solid var(--danger);
+      border-radius: var(--radius);
+      font-size: .88rem; font-weight: 600;
+      cursor: pointer; transition: background .15s;
+    }
+    .btn-delete-user:hover { background: var(--danger); color: #fff; }
+    .btn-delete-user:disabled { opacity: .5; cursor: not-allowed; }
   </style>
 </head>
 <body>
 
-<!-- ── LOGIN ──────────────────────────────────────────── -->
-<div id="login-view">
-  <div class="login-card">
-    <div class="logo">
-      <div class="logo-icon">L</div>
-      <div>
-        <h1>LoanTrack</h1>
-        <p>Painel Administrativo</p>
-      </div>
-    </div>
-
-    <div id="login-error"></div>
-
-    <div class="field">
-      <label for="email">E-mail</label>
-      <input type="email" id="email" placeholder="admin@email.com" autocomplete="username">
-    </div>
-    <div class="field">
-      <label for="password">Senha</label>
-      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
-    </div>
-
-    <button class="btn-primary" id="login-btn">Entrar</button>
-  </div>
-</div>
+<!-- login-view removido: acesso direto sem autenticação manual -->
 
 <!-- ── ADMIN PANEL ─────────────────────────────────────── -->
 <div id="admin-view">
@@ -563,23 +549,30 @@
     </div>
 
     <details class="rules-hint">
-      <summary>⚠️ Regras do Firestore recomendadas</summary>
-      <p style="margin-top:8px">Aplique estas regras no console Firebase → Firestore → Rules para proteger a escrita:</p>
+      <summary>⚠️ Regras do Firestore necessárias para o painel funcionar</summary>
+      <p style="margin-top:8px">O painel usa autenticação anônima automática. Aplique estas regras no Firebase Console → Firestore → Rules:</p>
       <pre>rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      // Usuário lê seus próprios dados; admin lê qualquer um
-      allow read: if request.auth != null &&
-        (request.auth.uid == userId ||
-         request.auth.token.email == "almeidainteligencia@gmail.com");
 
-      // Apenas o admin escreve
-      allow write: if request.auth != null &&
-        request.auth.token.email == "almeidainteligencia@gmail.com";
+    // Usuários: leitura/escrita requer autenticação (anônima ou real)
+    match /users/{userId} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Empréstimos: cada usuário acessa só os seus; admin (autenticado) acessa todos
+    match /loans/{userId}/loans/{loanId} {
+      allow read, write: if request.auth != null &&
+        request.auth.uid == userId;
+    }
+    // Permite que o painel leia/delete o documento pai do subcollection
+    match /loans/{userId} {
+      allow read, delete: if request.auth != null;
     }
   }
 }</pre>
+      <p style="margin-top:8px;color:#7b5800">Ative também <strong>Anonymous Authentication</strong> no Firebase Console → Authentication → Sign-in method.</p>
     </details>
   </main>
 </div>
@@ -607,10 +600,11 @@ service cloud.firestore {
 import { initializeApp }
   from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
-  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+  getAuth, signInAnonymously
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
-  getFirestore, collection, getDocs, doc, updateDoc, serverTimestamp, onSnapshot, query
+  getFirestore, collection, getDocs, doc, updateDoc, deleteDoc,
+  writeBatch, serverTimestamp, onSnapshot, query
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 /* ── Config ─────────────────────────────────────────────── */
@@ -624,26 +618,16 @@ const firebaseConfig = {
   // appId: "1:696052822175:web:XXXXXXXXXXXXXXXX"
 };
 
-const ADMIN_EMAIL = "almeidainteligencia@gmail.com";
-
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
 /* ── UI refs ────────────────────────────────────────────── */
-const loginView  = document.getElementById('login-view');
-const adminView  = document.getElementById('admin-view');
-const loginBtn   = document.getElementById('login-btn');
-const logoutBtn  = document.getElementById('logout-btn');
-const loginError = document.getElementById('login-error');
-const emailInput = document.getElementById('email');
-const passInput  = document.getElementById('password');
-const tbody      = document.getElementById('users-tbody');
-const table      = document.getElementById('users-table');
-const loading    = document.getElementById('loading');
+const tbody       = document.getElementById('users-tbody');
+const table       = document.getElementById('users-table');
+const loading     = document.getElementById('loading');
 const searchInput = document.getElementById('search');
-const toast      = document.getElementById('toast');
-const adminLabel = document.getElementById('admin-email-label');
+const toast       = document.getElementById('toast');
 
 let allUsers = [];
 let unsubscribeSnapshot = null;
@@ -657,64 +641,12 @@ function showToast(msg, type = 'ok') {
   toastTimer = setTimeout(() => { toast.className = ''; }, 3000);
 }
 
-/* ── Auth state ─────────────────────────────────────────── */
-onAuthStateChanged(auth, user => {
-  if (user && user.email === ADMIN_EMAIL) {
-    loginView.style.display  = 'none';
-    adminView.style.display  = 'block';
-    adminLabel.textContent   = user.email;
-    startListening();
-  } else {
-    if (user) {
-      // Logged in as non-admin
-      showError('Acesso restrito ao administrador.');
-      signOut(auth);
-    }
-    loginView.style.display  = 'flex';
-    adminView.style.display  = 'none';
-    stopListening();
-  }
-});
-
-/* ── Login ──────────────────────────────────────────────── */
-loginBtn.addEventListener('click', doLogin);
-[emailInput, passInput].forEach(el =>
-  el.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); })
-);
-
-async function doLogin() {
-  const email = emailInput.value.trim();
-  const pass  = passInput.value;
-  if (!email || !pass) { showError('Preencha e-mail e senha.'); return; }
-
-  loginBtn.disabled = true;
-  loginBtn.textContent = 'Entrando…';
-  hideError();
-
-  try {
-    const { user } = await signInWithEmailAndPassword(auth, email, pass);
-    if (user.email !== ADMIN_EMAIL) {
-      await signOut(auth);
-      showError('Acesso restrito ao administrador.');
-    }
-  } catch (err) {
-    showError(firebaseErrorMessage(err.code));
-  } finally {
-    loginBtn.disabled = false;
-    loginBtn.textContent = 'Entrar';
-  }
-}
-
-function showError(msg) {
-  loginError.textContent = msg;
-  loginError.style.display = 'block';
-}
-function hideError() {
-  loginError.style.display = 'none';
-}
-
-/* ── Logout ─────────────────────────────────────────────── */
-logoutBtn.addEventListener('click', () => signOut(auth));
+/* ── Auto sign-in anônimo (sem tela de login) ───────────── */
+signInAnonymously(auth)
+  .then(() => startListening())
+  .catch(e => {
+    loading.innerHTML = `<span style="color:var(--danger)">Erro ao conectar: ${e.message}</span>`;
+  });
 
 /* ── Realtime listener ──────────────────────────────────── */
 function startListening() {
@@ -728,10 +660,6 @@ function startListening() {
   });
 }
 
-function stopListening() {
-  if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
-  allUsers = [];
-}
 
 /* ── Stats ──────────────────────────────────────────────── */
 function renderStats() {
@@ -856,6 +784,32 @@ function closeModal() {
   userModal.classList.remove('open');
 }
 
+async function deleteUserData(uid, name, btn) {
+  if (!confirm(`Excluir "${name}" e todos os empréstimos?\n\nEsta ação não pode ser desfeita.`)) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Excluindo…';
+
+  try {
+    // Busca todos os empréstimos do subcollection
+    const loansSnap = await getDocs(collection(db, 'loans', uid, 'loans'));
+
+    // Usa batch para deletar tudo de uma vez (limite: 500 ops)
+    const batch = writeBatch(db);
+    loansSnap.docs.forEach(d => batch.delete(d.ref));
+    batch.delete(doc(db, 'loans', uid));   // documento pai do subcollection
+    batch.delete(doc(db, 'users', uid));   // documento do usuário
+    await batch.commit();
+
+    closeModal();
+    showToast(`Usuário "${name}" e ${loansSnap.size} empréstimo(s) excluídos.`);
+  } catch (e) {
+    showToast('Erro ao excluir: ' + e.message, 'err');
+    btn.disabled = false;
+    btn.textContent = '⚠ Excluir usuário e todos os dados';
+  }
+}
+
 const TIER_MAX = { BRONZE: 10, SILVER: 50, GOLD: Infinity };
 const TIER_LABEL = { BRONZE: 'Bronze (10)', SILVER: 'Prata (50)', GOLD: 'Ouro (∞)' };
 
@@ -935,7 +889,17 @@ async function openUserModal(uid, name, email, tier) {
           <span>${active} ativos — sem limite</span>
         </div>
       </div>`}
+
+      <button class="btn-delete-user" id="btn-delete-user" data-uid="${uid}" data-name="${escHtml(name)}">
+        ⚠ Excluir usuário e todos os dados
+      </button>
     `;
+
+    document.getElementById('btn-delete-user').addEventListener('click', async function() {
+      const btnUid  = this.dataset.uid;
+      const btnName = this.dataset.name;
+      await deleteUserData(btnUid, btnName, this);
+    });
   } catch (e) {
     modalBody.innerHTML = `<p style="color:var(--danger);padding:16px">Erro ao carregar empréstimos: ${e.message}</p>`;
   }
@@ -946,17 +910,6 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function firebaseErrorMessage(code) {
-  const map = {
-    'auth/invalid-email':          'E-mail inválido.',
-    'auth/user-not-found':         'Usuário não encontrado.',
-    'auth/wrong-password':         'Senha incorreta.',
-    'auth/invalid-credential':     'Credenciais inválidas.',
-    'auth/too-many-requests':      'Muitas tentativas. Tente novamente mais tarde.',
-    'auth/network-request-failed': 'Falha de conexão. Verifique a internet.',
-  };
-  return map[code] || `Erro: ${code}`;
-}
 </script>
 </body>
 </html>
